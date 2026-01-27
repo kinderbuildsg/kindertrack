@@ -5,12 +5,17 @@ import { User } from "@/entities/User";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
-  AlertTriangle
+  RefreshCw,
+  Search,
+  Filter
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 import KanbanBoard from "../components/dashboard/KanbanBoard";
+import MyTasksWidget from "../components/dashboard/MyTasksWidget";
 import StatsOverview from "../components/dashboard/StatsOverview";
 import UpcomingDeadlines from "../components/dashboard/UpcomingDeadlines";
 import SmartNotifications from "../components/dashboard/SmartNotifications";
@@ -21,6 +26,8 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadData();
@@ -34,7 +41,7 @@ export default function Dashboard() {
       
       const [projectsData, tasksData] = await Promise.all([
         Project.list("-updated_date"),
-        Task.list()
+        Task.filter({ completed: false }, "-due_date", 100)
       ]);
       
       setProjects(projectsData);
@@ -47,6 +54,33 @@ export default function Dashboard() {
 
   const handleProjectUpdate = () => {
     loadData();
+  };
+
+  const getFilteredProjects = () => {
+    let filtered = projects;
+
+    if (filter === 'my') {
+      filtered = filtered.filter(p => 
+        p.assigned_to === user?.email || 
+        (p.team_members || []).includes(user?.email)
+      );
+    } else if (filter === 'urgent') {
+      filtered = filtered.filter(p => p.priority === 'urgent' || p.priority === 'high');
+    } else if (filter === 'active') {
+      filtered = filtered.filter(p => 
+        p.stage !== 'completion' && p.stage !== 'post_maintenance'
+      );
+    }
+
+    if (searchQuery) {
+      filtered = filtered.filter(p => 
+        p.client_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.project_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.contact_person?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    return filtered;
   };
 
   return (
@@ -62,21 +96,78 @@ export default function Dashboard() {
               Welcome back, {user?.full_name || "User"}! Here's your project overview.
             </p>
           </div>
-          <Link to={createPageUrl("CreateProject")}>
-            <button className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
-              + New Project
-            </button>
-          </Link>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={loadData}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Link to={createPageUrl("CreateProject")}>
+              <button className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+                + New Project
+              </button>
+            </Link>
+          </div>
         </div>
+
+        {/* Quick Filters & Search */}
+        <Card className="shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search projects by client, title, or contact..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={filter === 'all' ? 'default' : 'outline'}
+                  onClick={() => setFilter('all')}
+                  size="sm"
+                >
+                  All Projects
+                </Button>
+                <Button
+                  variant={filter === 'my' ? 'default' : 'outline'}
+                  onClick={() => setFilter('my')}
+                  size="sm"
+                >
+                  My Projects
+                </Button>
+                <Button
+                  variant={filter === 'active' ? 'default' : 'outline'}
+                  onClick={() => setFilter('active')}
+                  size="sm"
+                >
+                  Active Only
+                </Button>
+                <Button
+                  variant={filter === 'urgent' ? 'default' : 'outline'}
+                  onClick={() => setFilter('urgent')}
+                  size="sm"
+                >
+                  Urgent
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Smart Notifications */}
         <SmartNotifications projects={projects} tasks={tasks} user={user} isLoading={isLoading} />
 
         {/* Stats Overview */}
-        <StatsOverview projects={projects} tasks={tasks} isLoading={isLoading} />
+        <StatsOverview projects={getFilteredProjects()} tasks={tasks} isLoading={isLoading} />
 
         {/* Analytics Charts */}
-        <AnalyticsCharts projects={projects} isLoading={isLoading} />
+        <AnalyticsCharts projects={getFilteredProjects()} isLoading={isLoading} />
 
         {/* Kanban Board */}
         <div className="bg-white rounded-2xl shadow-xl p-6">
@@ -85,51 +176,16 @@ export default function Dashboard() {
             <p className="text-gray-600">Drag and drop projects to update their stage</p>
           </div>
           <KanbanBoard 
-            projects={projects} 
+            projects={getFilteredProjects()} 
             isLoading={isLoading}
             onUpdate={handleProjectUpdate}
           />
         </div>
 
-        {/* Upcoming Deadlines & Payment Alerts */}
+        {/* My Tasks & Upcoming Deadlines */}
         <div className="grid lg:grid-cols-2 gap-6">
-          <UpcomingDeadlines projects={projects} tasks={tasks} isLoading={isLoading} />
-          
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                Payment Alerts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {projects
-                  .filter(p => p.stage === 'procurement' && !p.payment_30_received)
-                  .slice(0, 5)
-                  .map(project => (
-                    <Link 
-                      key={project.id}
-                      to={createPageUrl(`ProjectDetails?id=${project.id}`)}
-                      className="block p-3 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900">{project.client_name}</p>
-                          <p className="text-sm text-gray-600">Awaiting 30% payment before work start</p>
-                        </div>
-                        <Badge variant="outline" className="bg-amber-100 text-amber-800">
-                          Pending
-                        </Badge>
-                      </div>
-                    </Link>
-                  ))}
-                {projects.filter(p => p.stage === 'procurement' && !p.payment_30_received).length === 0 && (
-                  <p className="text-center text-gray-500 py-4">No pending payments</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <MyTasksWidget tasks={tasks} projects={projects} user={user} isLoading={isLoading} onUpdate={loadData} />
+          <UpcomingDeadlines projects={getFilteredProjects()} tasks={tasks} isLoading={isLoading} />
         </div>
       </div>
     </div>

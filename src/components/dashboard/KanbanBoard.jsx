@@ -1,4 +1,3 @@
-
 import React from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Project } from "@/entities/Project";
@@ -64,7 +63,23 @@ export default function KanbanBoard({ projects, isLoading, onUpdate }) {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex gap-4 overflow-x-auto pb-4 scroll-smooth">
+        <style>{`
+          .flex.gap-4.overflow-x-auto::-webkit-scrollbar {
+            height: 8px;
+          }
+          .flex.gap-4.overflow-x-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+          }
+          .flex.gap-4.overflow-x-auto::-webkit-scrollbar-thumb {
+            background: #0EA5E9;
+            border-radius: 10px;
+          }
+          .flex.gap-4.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+            background: #0284C7;
+          }
+        `}</style>
         {stages.map(stage => (
           <div key={stage.id} className="flex-shrink-0 w-80">
             <div className={`${stage.color} border-2 rounded-xl p-3 mb-3`}>
