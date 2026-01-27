@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Edit, Star, MessageSquare } from "lucide-react";
-import { v4 as uuidv4 } from 'crypto';
 
 export default function SurveyTemplateManager({ user }) {
   const [templates, setTemplates] = useState([]);
