@@ -20,7 +20,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { User } from "@/entities/User";
+import { base44 } from "@/api/base44Client";
+import { MessageSquare } from "lucide-react";
 
 const navigationItems = [
   {
@@ -37,6 +38,12 @@ const navigationItems = [
     title: "Team",
     url: createPageUrl("Team"),
     icon: Users,
+  },
+  {
+    title: "Surveys",
+    url: createPageUrl("SurveyManagement"),
+    icon: MessageSquare,
+    adminOnly: true
   }
 ];
 
@@ -50,7 +57,7 @@ export default function Layout({ children, currentPageName }) {
 
   const loadUser = async () => {
     try {
-      const currentUser = await User.me();
+      const currentUser = await base44.auth.me();
       setUser(currentUser);
     } catch (error) {
       console.log("Not authenticated");
@@ -58,7 +65,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const handleLogout = async () => {
-    await User.logout();
+    await base44.auth.logout();
     window.location.reload();
   };
 
@@ -97,7 +104,9 @@ export default function Layout({ children, currentPageName }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navigationItems.map((item) => (
+                  {navigationItems
+                    .filter(item => !item.adminOnly || user?.role === 'admin')
+                    .map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 

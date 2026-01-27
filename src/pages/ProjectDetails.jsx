@@ -8,6 +8,7 @@ import { PhaseNote } from "@/entities/PhaseNote";
 import { User } from "@/entities/User";
 import { ClientCommunication } from "@/entities/ClientCommunication";
 import { useNavigate } from "react-router-dom";
+import ProjectFeedback from "../components/project-details/ProjectFeedback";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
