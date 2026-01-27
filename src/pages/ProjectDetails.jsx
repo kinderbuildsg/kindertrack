@@ -257,13 +257,14 @@ export default function ProjectDetails() {
         <ProjectPhaseNotes project={project} />
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-7 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-8 bg-white shadow-md">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="procurement">Procurement</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="files">Files</TabsTrigger>
             <TabsTrigger value="communications">Communications</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
 
@@ -307,6 +308,13 @@ export default function ProjectDetails() {
               project={project}
               communications={communications}
               onUpdate={() => loadRelatedData(project.id)}
+            />
+          </TabsContent>
+
+          <TabsContent value="feedback" className="mt-6">
+            <ProjectFeedback
+              project={project}
+              onUpdate={handleProjectUpdate}
             />
           </TabsContent>
 
