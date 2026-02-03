@@ -20,6 +20,10 @@ import StatsOverview from "../components/dashboard/StatsOverview";
 import UpcomingDeadlines from "../components/dashboard/UpcomingDeadlines";
 import SmartNotifications from "../components/dashboard/SmartNotifications";
 import AnalyticsCharts from "../components/dashboard/AnalyticsCharts";
+import AdminDashboard from "../components/dashboard/AdminDashboard";
+import DesignerDashboard from "../components/dashboard/DesignerDashboard";
+import EmployeeDashboard from "../components/dashboard/EmployeeDashboard";
+import FinanceDashboard from "../components/dashboard/FinanceDashboard";
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -41,7 +45,7 @@ export default function Dashboard() {
       
       const [projectsData, tasksData] = await Promise.all([
         Project.list("-updated_date"),
-        Task.filter({ completed: false }, "-due_date", 100)
+        Task.list("-due_date", 200)
       ]);
       
       setProjects(projectsData);
@@ -81,6 +85,22 @@ export default function Dashboard() {
     }
 
     return filtered;
+  };
+
+  // Role-based dashboard rendering
+  const renderDashboard = () => {
+    const jobRole = user?.job_role || user?.role;
+    const filteredProjects = getFilteredProjects();
+
+    if (jobRole === 'admin' || user?.role === 'admin') {
+      return <AdminDashboard projects={filteredProjects} tasks={tasks} user={user} isLoading={isLoading} onUpdate={handleProjectUpdate} />;
+    } else if (jobRole === 'designer') {
+      return <DesignerDashboard projects={filteredProjects} tasks={tasks} user={user} isLoading={isLoading} />;
+    } else if (jobRole === 'finance') {
+      return <FinanceDashboard projects={filteredProjects} tasks={tasks} user={user} isLoading={isLoading} />;
+    } else {
+      return <EmployeeDashboard projects={filteredProjects} tasks={tasks} user={user} isLoading={isLoading} onUpdate={handleProjectUpdate} />;
+    }
   };
 
   return (
@@ -163,30 +183,8 @@ export default function Dashboard() {
         {/* Smart Notifications */}
         <SmartNotifications projects={projects} tasks={tasks} user={user} isLoading={isLoading} />
 
-        {/* Stats Overview */}
-        <StatsOverview projects={getFilteredProjects()} tasks={tasks} isLoading={isLoading} />
-
-        {/* Analytics Charts */}
-        <AnalyticsCharts projects={getFilteredProjects()} isLoading={isLoading} />
-
-        {/* Kanban Board */}
-        <div className="bg-white rounded-2xl shadow-xl p-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Pipeline</h2>
-            <p className="text-gray-600">Drag and drop projects to update their stage</p>
-          </div>
-          <KanbanBoard 
-            projects={getFilteredProjects()} 
-            isLoading={isLoading}
-            onUpdate={handleProjectUpdate}
-          />
-        </div>
-
-        {/* My Tasks & Upcoming Deadlines */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          <MyTasksWidget tasks={tasks} projects={projects} user={user} isLoading={isLoading} onUpdate={loadData} />
-          <UpcomingDeadlines projects={getFilteredProjects()} tasks={tasks} isLoading={isLoading} />
-        </div>
+        {/* Role-Based Dashboard */}
+        {renderDashboard()}
       </div>
     </div>
   );
