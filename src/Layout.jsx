@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { base44 } from "@/api/base44Client";
 import { MessageSquare } from "lucide-react";
+import NotificationPanel from "./components/notifications/NotificationPanel";
 
 const navigationItems = [
   {
@@ -165,11 +166,13 @@ export default function Layout({ children, currentPageName }) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col overflow-hidden">
-          <header className="bg-white border-b border-[var(--border)] px-6 py-4 md:hidden">
-            <div className="flex items-center gap-4">
+          <header className="bg-white border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4 md:hidden">
               <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200" />
               <h1 className="text-xl font-bold text-gray-900">Kinderbuild Projects</h1>
             </div>
+            <div className="flex-1" />
+            <NotificationPanel user={user} />
           </header>
 
           <div className="flex-1 overflow-auto">
