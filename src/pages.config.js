@@ -53,6 +53,7 @@ import ProjectDetails from './pages/ProjectDetails';
 import Projects from './pages/Projects';
 import SurveyManagement from './pages/SurveyManagement';
 import Team from './pages/Team';
+import TemplateManagement from './pages/TemplateManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -63,6 +64,7 @@ export const PAGES = {
     "Projects": Projects,
     "SurveyManagement": SurveyManagement,
     "Team": Team,
+    "TemplateManagement": TemplateManagement,
 }
 
 export const pagesConfig = {
