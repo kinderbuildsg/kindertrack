@@ -57,6 +57,7 @@ import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
 import ChangePassword from './pages/ChangePassword';
+import PendingApproval from './pages/PendingApproval';
 import __Layout from './Layout.jsx';
 
 
@@ -71,6 +72,7 @@ export const PAGES = {
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
     "ChangePassword": ChangePassword,
+    "PendingApproval": PendingApproval,
 }
 
 export const pagesConfig = {

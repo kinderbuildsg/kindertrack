@@ -19,6 +19,8 @@ export default function UserManagement() {
   const [inviteRole, setInviteRole] = useState("user");
   const [invitePassword, setInvitePassword] = useState("");
   const [isInviting, setIsInviting] = useState(false);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [approvedUsers, setApprovedUsers] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -33,11 +35,74 @@ export default function UserManagement() {
       
       setCurrentUser(currentUserData);
       setUsers(usersData);
+      setPendingUsers(usersData.filter(u => u.approval_status === "pending"));
+      setApprovedUsers(usersData.filter(u => u.approval_status === "approved" || !u.approval_status));
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load users");
     }
     setIsLoading(false);
+  };
+
+  const handleApprove = async (userId, userName, userEmail) => {
+    try {
+      await base44.entities.User.update(userId, {
+        approval_status: "approved",
+        approved_by: currentUser.email,
+        approved_date: new Date().toISOString()
+      });
+
+      await base44.integrations.Core.SendEmail({
+        to: userEmail,
+        subject: "Your Kinderbuild Projects Account Has Been Approved",
+        body: `Hello ${userName},
+
+Good news! Your Kinderbuild Projects account has been approved.
+
+You can now log in and start using the application.
+
+Best regards,
+Kinderbuild Projects Team`
+      });
+
+      toast.success(`${userName} has been approved`);
+      await loadData();
+    } catch (error) {
+      console.error("Error approving user:", error);
+      toast.error("Failed to approve user");
+    }
+  };
+
+  const handleReject = async (userId, userName, userEmail) => {
+    const reason = prompt("Reason for rejection (optional):");
+    
+    try {
+      await base44.entities.User.update(userId, {
+        approval_status: "rejected",
+        rejection_reason: reason || "No reason provided"
+      });
+
+      await base44.integrations.Core.SendEmail({
+        to: userEmail,
+        subject: "Kinderbuild Projects Account Update",
+        body: `Hello ${userName},
+
+Unfortunately, your Kinderbuild Projects account application has been declined.
+
+${reason ? `Reason: ${reason}` : ''}
+
+If you have questions, please contact an administrator.
+
+Best regards,
+Kinderbuild Projects Team`
+      });
+
+      toast.success(`${userName} has been rejected`);
+      await loadData();
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      toast.error("Failed to reject user");
+    }
   };
 
   const generatePassword = () => {
@@ -75,6 +140,16 @@ export default function UserManagement() {
         role: inviteRole,
         temporary_password: invitePassword
       });
+
+      // Approve the user immediately since admin created them
+      const newUsers = await base44.entities.User.filter({ email: inviteEmail });
+      if (newUsers.length > 0) {
+        await base44.entities.User.update(newUsers[0].id, {
+          approval_status: "approved",
+          approved_by: currentUser.email,
+          approved_date: new Date().toISOString()
+        });
+      }
       toast.success(`User created and credentials sent to ${inviteEmail}`);
       setInviteEmail("");
       setInviteName("");
@@ -210,13 +285,64 @@ export default function UserManagement() {
           </CardContent>
         </Card>
 
+        {pendingUsers.length > 0 && (
+          <Card className="shadow-lg border-amber-200">
+            <CardHeader className="bg-amber-50">
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-5 h-5 text-amber-600" />
+                Pending Approval ({pendingUsers.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pendingUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between p-4 border border-amber-200 rounded-lg bg-amber-50/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold text-sm">
+                          {user.full_name?.charAt(0).toUpperCase() || "?"}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{user.full_name || "No name"}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <p className="text-xs text-gray-400">Registered {new Date(user.created_date).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleReject(user.id, user.full_name, user.email)}
+                        className="text-red-600 hover:bg-red-50"
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprove(user.id, user.full_name, user.email)}
+                        className="bg-gradient-to-r from-green-500 to-green-600"
+                      >
+                        Approve
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Current Users ({users.length})</CardTitle>
+            <CardTitle>Approved Users ({approvedUsers.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {users.map((user) => (
+              {approvedUsers.map((user) => (
                 <div
                   key={user.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
