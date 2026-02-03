@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import ChangePassword from './pages/ChangePassword';
+import ColdCalling from './pages/ColdCalling';
 import CreateProject from './pages/CreateProject';
 import Dashboard from './pages/Dashboard';
 import LeadManagement from './pages/LeadManagement';
@@ -57,12 +58,19 @@ import Projects from './pages/Projects';
 import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
-import ColdCalling from './pages/ColdCalling';
+import SiteEvaluationPage from './pages/SiteEvaluationPage';
+import DesignProposalPage from './pages/DesignProposalPage';
+import DealClosedPage from './pages/DealClosedPage';
+import ProcurementPage from './pages/ProcurementPage';
+import WorkProgressPage from './pages/WorkProgressPage';
+import CompletionPage from './pages/CompletionPage';
+import MaintenancePage from './pages/MaintenancePage';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "ChangePassword": ChangePassword,
+    "ColdCalling": ColdCalling,
     "CreateProject": CreateProject,
     "Dashboard": Dashboard,
     "LeadManagement": LeadManagement,
@@ -72,7 +80,13 @@ export const PAGES = {
     "Team": Team,
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
-    "ColdCalling": ColdCalling,
+    "SiteEvaluationPage": SiteEvaluationPage,
+    "DesignProposalPage": DesignProposalPage,
+    "DealClosedPage": DealClosedPage,
+    "ProcurementPage": ProcurementPage,
+    "WorkProgressPage": WorkProgressPage,
+    "CompletionPage": CompletionPage,
+    "MaintenancePage": MaintenancePage,
 }
 
 export const pagesConfig = {
