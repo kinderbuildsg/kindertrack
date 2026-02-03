@@ -25,45 +25,60 @@ import { base44 } from "@/api/base44Client";
 import { MessageSquare } from "lucide-react";
 import NotificationPanel from "./components/notifications/NotificationPanel";
 
-const navigationItems = [
-  {
-    title: "Dashboard",
-    url: createPageUrl("Dashboard"),
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Cold Calling",
-    url: createPageUrl("ColdCalling"),
-    icon: MessageSquare,
-  },
-  {
-    title: "Leads",
-    url: createPageUrl("LeadManagement"),
-    icon: Users,
-  },
-  {
-    title: "All Projects",
-    url: createPageUrl("Projects"),
-    icon: FolderKanban,
-  },
-  {
-    title: "Team",
-    url: createPageUrl("Team"),
-    icon: Users,
-  },
-  {
-    title: "Templates",
-    url: createPageUrl("TemplateManagement"),
-    icon: LayoutList,
-    adminOnly: true
-  },
-  {
-    title: "Users",
-    url: createPageUrl("UserManagement"),
-    icon: Users,
-    adminOnly: true
-  }
-];
+const getNavigationItems = (user) => {
+  const role = user?.role;
+  const jobRole = user?.job_role;
+  
+  const items = [
+    {
+      title: "Dashboard",
+      url: createPageUrl("Dashboard"),
+      icon: LayoutDashboard,
+      roles: ['admin', 'director', 'sales', 'designer', 'cold_caller']
+    },
+    {
+      title: "Cold Calling",
+      url: createPageUrl("ColdCalling"),
+      icon: MessageSquare,
+      roles: ['admin', 'director', 'cold_caller']
+    },
+    {
+      title: "Leads",
+      url: createPageUrl("LeadManagement"),
+      icon: Users,
+      roles: ['admin', 'director', 'sales', 'cold_caller']
+    },
+    {
+      title: "All Projects",
+      url: createPageUrl("Projects"),
+      icon: FolderKanban,
+      roles: ['admin', 'director', 'sales', 'designer']
+    },
+    {
+      title: "Team",
+      url: createPageUrl("Team"),
+      icon: Users,
+      roles: ['admin', 'director', 'sales', 'designer']
+    },
+    {
+      title: "Templates",
+      url: createPageUrl("TemplateManagement"),
+      icon: LayoutList,
+      roles: ['admin', 'director']
+    },
+    {
+      title: "Users",
+      url: createPageUrl("UserManagement"),
+      icon: Users,
+      roles: ['admin', 'director']
+    }
+  ];
+  
+  return items.filter(item => {
+    if (role === 'admin' || jobRole === 'director') return true;
+    return item.roles.includes(jobRole);
+  });
+};
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
@@ -139,9 +154,7 @@ export default function Layout({ children, currentPageName }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navigationItems
-                    .filter(item => !item.adminOnly || user?.role === 'admin')
-                    .map((item) => (
+                  {getNavigationItems(user).map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton 
                         asChild 
