@@ -8,7 +8,6 @@ import { PhaseNote } from "@/entities/PhaseNote";
 import { User } from "@/entities/User";
 import { ClientCommunication } from "@/entities/ClientCommunication";
 import { useNavigate } from "react-router-dom";
-import ProjectFeedback from "../components/project-details/ProjectFeedback";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -258,7 +257,7 @@ export default function ProjectDetails() {
         <ProjectPhaseNotes project={project} />
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-9 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-8 bg-white shadow-md">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="procurement">Procurement</TabsTrigger>
@@ -266,7 +265,6 @@ export default function ProjectDetails() {
             <TabsTrigger value="files">Files</TabsTrigger>
             <TabsTrigger value="communications">Communications</TabsTrigger>
             <TabsTrigger value="follow-ups">Follow-Ups</TabsTrigger>
-            <TabsTrigger value="feedback">Feedback</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
 
@@ -315,13 +313,6 @@ export default function ProjectDetails() {
 
           <TabsContent value="follow-ups" className="mt-6">
             <FollowUpManager project={project} user={user} />
-          </TabsContent>
-
-          <TabsContent value="feedback" className="mt-6">
-            <ProjectFeedback
-              project={project}
-              onUpdate={handleProjectUpdate}
-            />
           </TabsContent>
 
           <TabsContent value="timeline" className="mt-6">
