@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import GlobalSearch from "../components/search/GlobalSearch";
 import SavedFilters from "../components/search/SavedFilters";
 import BulkActionsBar from "../components/quick-actions/BulkActionsBar";
+import FollowUpList from "../components/follow-ups/FollowUpList";
 
 import KanbanBoard from "../components/dashboard/KanbanBoard";
 import MyTasksWidget from "../components/dashboard/MyTasksWidget";
@@ -226,6 +227,9 @@ export default function Dashboard() {
 
         {/* Smart Notifications */}
         <SmartNotifications projects={projects} tasks={tasks} user={user} isLoading={isLoading} />
+
+        {/* Follow-Up Reminders */}
+        <FollowUpList user={user} />
 
         {/* Role-Based Dashboard */}
         {renderDashboard()}

@@ -26,6 +26,7 @@ import ProjectTimeline from "../components/project-details/ProjectTimeline";
 import ProjectEdit from "../components/project-details/ProjectEdit";
 import ProjectProcurement from "../components/project-details/ProjectProcurement";
 import ProjectCommunications from "../components/project-details/ProjectCommunications";
+import FollowUpManager from "../components/follow-ups/FollowUpManager";
 
 export default function ProjectDetails() {
   const navigate = useNavigate();
@@ -257,13 +258,14 @@ export default function ProjectDetails() {
         <ProjectPhaseNotes project={project} />
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-8 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-9 bg-white shadow-md">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="procurement">Procurement</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="files">Files</TabsTrigger>
             <TabsTrigger value="communications">Communications</TabsTrigger>
+            <TabsTrigger value="follow-ups">Follow-Ups</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
@@ -309,6 +311,10 @@ export default function ProjectDetails() {
               communications={communications}
               onUpdate={() => loadRelatedData(project.id)}
             />
+          </TabsContent>
+
+          <TabsContent value="follow-ups" className="mt-6">
+            <FollowUpManager project={project} user={user} />
           </TabsContent>
 
           <TabsContent value="feedback" className="mt-6">
