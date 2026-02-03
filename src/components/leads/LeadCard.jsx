@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LeadForm from "./LeadForm";
 import LeadActivityTimeline from "./LeadActivityTimeline";
 import LeadQualificationForm from "./LeadQualificationForm";
+import ColdCallScriptGenerator from "./ColdCallScriptGenerator";
 
 export default function LeadCard({ lead, statusColors, onUpdate, onConvert, isSelected, onSelect }) {
   const [showDetails, setShowDetails] = useState(false);
@@ -158,9 +159,10 @@ export default function LeadCard({ lead, statusColors, onUpdate, onConvert, isSe
             />
           ) : (
             <Tabs defaultValue="details">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
+                <TabsTrigger value="scripts">Call Scripts</TabsTrigger>
                 <TabsTrigger value="bant">BANT</TabsTrigger>
               </TabsList>
 
@@ -269,13 +271,17 @@ export default function LeadCard({ lead, statusColors, onUpdate, onConvert, isSe
             </TabsContent>
 
             <TabsContent value="activity" className="mt-4">
-                <LeadActivityTimeline 
-                  leadId={lead.id} 
-                  onUpdate={() => handleEdit(lead)}
-                />
-              </TabsContent>
+              <LeadActivityTimeline 
+                leadId={lead.id} 
+                onUpdate={() => handleEdit(lead)}
+              />
+            </TabsContent>
 
-              <TabsContent value="bant" className="mt-4 space-y-4">
+            <TabsContent value="scripts" className="mt-4">
+              <ColdCallScriptGenerator lead={lead} />
+            </TabsContent>
+
+            <TabsContent value="bant" className="mt-4 space-y-4">
                 {lead.budget || lead.authority || lead.need || lead.timeline ? (
                   <>
                     <div className="grid grid-cols-2 gap-4">
