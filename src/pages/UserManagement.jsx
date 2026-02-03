@@ -6,15 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Mail, Shield, User, Loader2 } from "lucide-react";
+import { UserPlus, Mail, Shield, User, Loader2, Key } from "lucide-react";
 import { toast } from "sonner";
+import { inviteUserWithPassword } from "@/functions/inviteUserWithPassword";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
   const [inviteRole, setInviteRole] = useState("user");
+  const [invitePassword, setInvitePassword] = useState("");
   const [isInviting, setIsInviting] = useState(false);
 
   useEffect(() => {
@@ -37,6 +40,15 @@ export default function UserManagement() {
     setIsLoading(false);
   };
 
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setInvitePassword(password);
+  };
+
   const handleInvite = async (e) => {
     e.preventDefault();
     
@@ -45,11 +57,28 @@ export default function UserManagement() {
       return;
     }
 
+    if (!inviteName) {
+      toast.error("Please enter the user's full name");
+      return;
+    }
+
+    if (!invitePassword || invitePassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
     setIsInviting(true);
     try {
-      await base44.users.inviteUser(inviteEmail, inviteRole);
-      toast.success(`Invitation sent to ${inviteEmail}`);
+      await inviteUserWithPassword({
+        email: inviteEmail,
+        full_name: inviteName,
+        role: inviteRole,
+        temporary_password: invitePassword
+      });
+      toast.success(`User created and credentials sent to ${inviteEmail}`);
       setInviteEmail("");
+      setInviteName("");
+      setInvitePassword("");
       setInviteRole("user");
       await loadData();
     } catch (error) {
@@ -100,6 +129,17 @@ export default function UserManagement() {
             <form onSubmit={handleInvite} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <Input
                     id="email"
@@ -110,6 +150,9 @@ export default function UserManagement() {
                     required
                   />
                 </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
                   <Select value={inviteRole} onValueChange={setInviteRole}>
@@ -121,6 +164,29 @@ export default function UserManagement() {
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Temporary Password</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="password"
+                      type="text"
+                      placeholder="Min 8 characters"
+                      value={invitePassword}
+                      onChange={(e) => setInvitePassword(e.target.value)}
+                      required
+                      minLength={8}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={generatePassword}
+                      className="shrink-0"
+                    >
+                      <Key className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">User will be required to change this on first login</p>
                 </div>
               </div>
               <Button 
@@ -164,6 +230,11 @@ export default function UserManagement() {
                     <div>
                       <p className="font-medium text-gray-900">{user.full_name || "No name"}</p>
                       <p className="text-sm text-gray-500">{user.email}</p>
+                      {user.must_change_password && (
+                        <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 mt-1">
+                          Must change password
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <Badge 

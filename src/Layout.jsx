@@ -78,6 +78,11 @@ export default function Layout({ children, currentPageName }) {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      
+      // Check if user needs to change password
+      if (currentUser.must_change_password && location.pathname !== createPageUrl("ChangePassword")) {
+        window.location.href = createPageUrl("ChangePassword");
+      }
     } catch (error) {
       console.log("Not authenticated");
     }
