@@ -56,6 +56,7 @@ import SurveyManagement from './pages/SurveyManagement';
 import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
+import ChangePassword from './pages/ChangePassword';
 import __Layout from './Layout.jsx';
 
 
@@ -69,6 +70,7 @@ export const PAGES = {
     "Team": Team,
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
+    "ChangePassword": ChangePassword,
 }
 
 export const pagesConfig = {
