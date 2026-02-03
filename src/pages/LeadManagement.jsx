@@ -7,18 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, TrendingUp, Users, DollarSign, Target, ArrowRight } from "lucide-react";
+import { Plus, Search, TrendingUp, Users, DollarSign, Target, ArrowRight, Upload, Phone } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LeadForm from "../components/leads/LeadForm";
 import LeadCard from "../components/leads/LeadCard";
+import CSVUploader from "../components/leads/CSVUploader";
+import ColdCallTracker from "../components/leads/ColdCallTracker";
 
 export default function LeadManagement() {
   const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showCSVUploader, setShowCSVUploader] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
     loadData();
@@ -58,9 +63,10 @@ export default function LeadManagement() {
     : 0;
 
   const statusColors = {
-    new: "bg-blue-100 text-blue-800",
-    contacted: "bg-purple-100 text-purple-800",
-    qualified: "bg-cyan-100 text-cyan-800",
+    cold: "bg-blue-100 text-blue-800",
+    warm: "bg-purple-100 text-purple-800",
+    in_contact: "bg-cyan-100 text-cyan-800",
+    qualified: "bg-teal-100 text-teal-800",
     proposal_sent: "bg-amber-100 text-amber-800",
     negotiating: "bg-orange-100 text-orange-800",
     won: "bg-green-100 text-green-800",
@@ -85,13 +91,22 @@ export default function LeadManagement() {
             <h1 className="text-3xl font-bold text-gray-900">Lead Management</h1>
             <p className="text-gray-600 mt-1">Track and convert potential clients</p>
           </div>
-          <Button 
-            onClick={() => setShowForm(true)}
-            className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Lead
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowCSVUploader(true)}
+              variant="outline"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
+            <Button 
+              onClick={() => setShowForm(true)}
+              className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Lead
+            </Button>
+          </div>
         </div>
 
         {showForm && (
@@ -103,6 +118,17 @@ export default function LeadManagement() {
               setShowForm(false);
             }}
             onCancel={() => setShowForm(false)}
+          />
+        )}
+
+        {showCSVUploader && (
+          <CSVUploader
+            user={user}
+            onComplete={() => {
+              setShowCSVUploader(false);
+              loadData();
+            }}
+            onCancel={() => setShowCSVUploader(false)}
           />
         )}
 
@@ -156,55 +182,75 @@ export default function LeadManagement() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search leads..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="contacted">Contacted</SelectItem>
-                  <SelectItem value="qualified">Qualified</SelectItem>
-                  <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
-                  <SelectItem value="negotiating">Negotiating</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredLeads.map(lead => (
-                <LeadCard 
-                  key={lead.id}
-                  lead={lead}
-                  statusColors={statusColors}
-                  onUpdate={loadData}
-                  onConvert={handleConvertToProject}
-                />
-              ))}
-            </div>
-            {filteredLeads.length === 0 && (
-              <div className="text-center py-12">
-                <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No leads found</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 bg-white shadow-md">
+            <TabsTrigger value="all">
+              <Target className="w-4 h-4 mr-2" />
+              All Leads
+            </TabsTrigger>
+            <TabsTrigger value="coldcall">
+              <Phone className="w-4 h-4 mr-2" />
+              Cold Call Tracker
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="mt-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search leads..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full md:w-48">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="cold">Cold</SelectItem>
+                      <SelectItem value="warm">Warm</SelectItem>
+                      <SelectItem value="in_contact">In Contact</SelectItem>
+                      <SelectItem value="qualified">Qualified</SelectItem>
+                      <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
+                      <SelectItem value="negotiating">Negotiating</SelectItem>
+                      <SelectItem value="won">Won</SelectItem>
+                      <SelectItem value="lost">Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredLeads.map(lead => (
+                    <LeadCard 
+                      key={lead.id}
+                      lead={lead}
+                      statusColors={statusColors}
+                      onUpdate={loadData}
+                      onConvert={handleConvertToProject}
+                    />
+                  ))}
+                </div>
+                {filteredLeads.length === 0 && (
+                  <div className="text-center py-12">
+                    <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No leads found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="coldcall" className="mt-6">
+            <ColdCallTracker leads={leads} onUpdate={loadData} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

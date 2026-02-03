@@ -49,26 +49,26 @@
  */
 import CreateProject from './pages/CreateProject';
 import Dashboard from './pages/Dashboard';
+import LeadManagement from './pages/LeadManagement';
 import ProjectDetails from './pages/ProjectDetails';
 import Projects from './pages/Projects';
 import SurveyManagement from './pages/SurveyManagement';
 import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
-import LeadManagement from './pages/LeadManagement';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "CreateProject": CreateProject,
     "Dashboard": Dashboard,
+    "LeadManagement": LeadManagement,
     "ProjectDetails": ProjectDetails,
     "Projects": Projects,
     "SurveyManagement": SurveyManagement,
     "Team": Team,
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
-    "LeadManagement": LeadManagement,
 }
 
 export const pagesConfig = {

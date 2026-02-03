@@ -14,7 +14,7 @@ export default function LeadForm({ lead, user, onSave, onCancel }) {
     contact_email: "",
     contact_phone: "",
     lead_source: "other",
-    status: "new",
+    status: "cold",
     estimated_value: "",
     probability: 50,
     site_address: "",
@@ -107,8 +107,9 @@ export default function LeadForm({ lead, user, onSave, onCancel }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="new">New</SelectItem>
-                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="cold">Cold</SelectItem>
+                  <SelectItem value="warm">Warm</SelectItem>
+                  <SelectItem value="in_contact">In Contact</SelectItem>
                   <SelectItem value="qualified">Qualified</SelectItem>
                   <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
                   <SelectItem value="negotiating">Negotiating</SelectItem>
