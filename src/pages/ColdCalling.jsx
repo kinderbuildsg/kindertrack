@@ -122,6 +122,23 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
     }
   };
 
+  const handleClearQueue = async () => {
+    if (!confirm(`Are you sure you want to remove all ${coldLeads.length} contacts from the cold calling queue? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      for (const lead of coldLeads) {
+        await base44.entities.Lead.delete(lead.id);
+      }
+      toast.success("Cold calling queue cleared!");
+      loadData();
+    } catch (error) {
+      console.error("Error clearing queue:", error);
+      toast.error("Failed to clear queue");
+    }
+  };
+
   const handleAddLead = async () => {
     if (!newLead.contact_person || !newLead.contact_phone) {
       toast.error("Contact person and phone number are required");
@@ -253,6 +270,12 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
               <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
+            {coldLeads.length > 0 && user?.role === 'admin' && (
+              <Button variant="destructive" onClick={handleClearQueue}>
+                <XCircle className="w-4 h-4 mr-2" />
+                Clear Queue
+              </Button>
+            )}
             <Dialog open={addLeadDialogOpen} onOpenChange={setAddLeadDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-green-500 to-green-600">
