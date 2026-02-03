@@ -9,30 +9,20 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { 
-            project_id, 
-            summary, 
-            description, 
-            start_time, 
-            end_time, 
-            location,
-            attendees 
-        } = await req.json();
+        const { project_id, summary, location, description, start_time, end_time } = await req.json();
 
-        if (!summary || !start_time || !end_time) {
-            return Response.json({ 
-                error: 'Missing required fields: summary, start_time, end_time' 
-            }, { status: 400 });
+        if (!project_id || !summary || !start_time || !end_time) {
+            return Response.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Get Google Calendar access token
+        // Get access token for Google Calendar
         const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
 
         // Create calendar event
-        const event = {
+        const eventData = {
             summary,
-            description,
             location,
+            description,
             start: {
                 dateTime: start_time,
                 timeZone: 'Asia/Singapore'
@@ -41,12 +31,11 @@ Deno.serve(async (req) => {
                 dateTime: end_time,
                 timeZone: 'Asia/Singapore'
             },
-            attendees: attendees?.map(email => ({ email })) || [],
             reminders: {
                 useDefault: false,
                 overrides: [
-                    { method: 'email', minutes: 24 * 60 },
-                    { method: 'popup', minutes: 30 }
+                    { method: 'email', minutes: 24 * 60 }, // 1 day before
+                    { method: 'popup', minutes: 60 } // 1 hour before
                 ]
             }
         };
@@ -57,40 +46,30 @@ Deno.serve(async (req) => {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(event)
+            body: JSON.stringify(eventData)
         });
 
         if (!response.ok) {
             const error = await response.text();
-            throw new Error(`Google Calendar API error: ${error}`);
+            throw new Error(`Calendar API error: ${error}`);
         }
 
-        const calendarEvent = await response.json();
+        const event = await response.json();
 
-        // Log communication if project_id provided
-        if (project_id) {
-            await base44.asServiceRole.entities.ClientCommunication.create({
-                project_id,
-                communication_type: 'meeting',
-                subject: summary,
-                notes: `Calendar event created: ${calendarEvent.htmlLink}\n${description || ''}`
-            });
-
-            // Create project update
-            await base44.asServiceRole.entities.ProjectUpdate.create({
-                project_id,
-                update_type: 'comment',
-                content: `📅 Appointment scheduled: ${summary}\nTime: ${new Date(start_time).toLocaleString()}`
-            });
-        }
+        // Update project with calendar event ID
+        await base44.asServiceRole.entities.Project.update(project_id, {
+            calendar_event_id: event.id,
+            site_evaluation_date: start_time,
+            site_evaluation_location: location
+        });
 
         return Response.json({ 
             success: true, 
-            event: calendarEvent,
-            event_link: calendarEvent.htmlLink
+            event_id: event.id,
+            event_link: event.htmlLink
         });
+
     } catch (error) {
-        console.error('Error creating calendar event:', error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
