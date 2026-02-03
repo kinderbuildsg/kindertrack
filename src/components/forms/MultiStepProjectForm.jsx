@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronLeft, ChevronRight, Save } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
-export default function MultiStepProjectForm({ formData, handleChange, handleSubmit, isSubmitting, onCancel }) {
+export default function MultiStepProjectForm({ formData, handleChange, handleSubmit, isSubmitting, onCancel, templates, selectedTemplate, onTemplateSelect }) {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
 
@@ -33,6 +33,25 @@ export default function MultiStepProjectForm({ formData, handleChange, handleSub
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="space-y-4">
+              {/* Template Selection */}
+              {templates && templates.length > 0 && (
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                  <Label>Use Template (Optional)</Label>
+                  <Select value={selectedTemplate?.id || ""} onValueChange={onTemplateSelect}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Choose template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>No Template</SelectItem>
+                      {templates.map(template => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <h3 className="font-semibold text-lg text-gray-900 mb-4">Basic Information</h3>
               
               <div className="space-y-2">

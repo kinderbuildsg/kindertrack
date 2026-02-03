@@ -15,6 +15,8 @@ export default function CreateProject() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({
     project_title: "",
     client_name: "",
@@ -32,8 +34,28 @@ export default function CreateProject() {
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
+    loadTemplates();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const loadTemplates = async () => {
+    const data = await base44.entities.ProjectTemplate.filter({ is_active: true }, "-created_date");
+    setTemplates(data);
+  };
+
+  const handleTemplateSelect = (templateId) => {
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setSelectedTemplate(template);
+      setFormData(prev => ({
+        ...prev,
+        stage: template.default_stage || prev.stage,
+        priority: template.default_priority || prev.priority
+      }));
+    } else {
+      setSelectedTemplate(null);
+    }
+  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -51,6 +73,51 @@ export default function CreateProject() {
       };
 
       const newProject = await base44.entities.Project.create(projectData);
+
+      // Apply template if selected
+      if (selectedTemplate) {
+        const promises = [];
+
+        // Create default tasks
+        if (selectedTemplate.default_tasks && selectedTemplate.default_tasks.length > 0) {
+          const taskPromises = selectedTemplate.default_tasks.map((task, index) => 
+            base44.entities.Task.create({
+              project_id: newProject.id,
+              title: task.title,
+              description: task.description || "",
+              stage: task.stage,
+              order: index,
+              completed: false
+            })
+          );
+          promises.push(...taskPromises);
+        }
+
+        // Create initial follow-up reminder (2 weeks)
+        promises.push(
+          base44.entities.FollowUpReminder.create({
+            project_id: newProject.id,
+            reminder_type: "recurring",
+            interval_weeks: 2,
+            next_reminder_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            reminder_message: "Regular project follow-up",
+            is_active: true
+          })
+        );
+
+        // Create initial communication log
+        promises.push(
+          base44.entities.ClientCommunication.create({
+            project_id: newProject.id,
+            communication_type: "other",
+            subject: "Project initiated from template",
+            notes: `Project created using "${selectedTemplate.name}" template with ${selectedTemplate.default_tasks?.length || 0} default tasks.`
+          })
+        );
+
+        await Promise.all(promises);
+      }
+
       navigate(createPageUrl(`ProjectDetails?id=${newProject.id}`));
     } catch (error) {
       console.error("Error creating project:", error);
@@ -84,6 +151,9 @@ export default function CreateProject() {
             handleSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             onCancel={() => navigate(createPageUrl("Dashboard"))}
+            templates={templates}
+            selectedTemplate={selectedTemplate}
+            onTemplateSelect={handleTemplateSelect}
           />
         ) : (
           <form onSubmit={handleSubmit}>
@@ -92,6 +162,30 @@ export default function CreateProject() {
                 <CardTitle>Project Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+              {/* Template Selection */}
+              {templates.length > 0 && (
+                <div className="space-y-2 bg-amber-50 p-4 rounded-lg border-2 border-amber-200">
+                  <Label htmlFor="template">Use a Template (Optional)</Label>
+                  <Select value={selectedTemplate?.id || ""} onValueChange={handleTemplateSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a template to get started faster..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>No Template</SelectItem>
+                      {templates.map(template => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name} ({template.default_tasks?.length || 0} tasks)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedTemplate && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      ✨ Will auto-create {selectedTemplate.default_tasks?.length || 0} tasks and set up follow-up reminders
+                    </p>
+                  )}
+                </div>
+              )}
               {/* Project Title */}
               <div className="space-y-2">
                   <Label htmlFor="project_title">Project Title</Label>

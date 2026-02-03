@@ -4,7 +4,8 @@ import { createPageUrl } from "@/utils";
 import { 
   LayoutDashboard, 
   FolderKanban, 
-  Users
+  Users,
+  LayoutList
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,6 +45,12 @@ const navigationItems = [
     title: "Surveys",
     url: createPageUrl("SurveyManagement"),
     icon: MessageSquare,
+    adminOnly: true
+  },
+  {
+    title: "Templates",
+    url: createPageUrl("TemplateManagement"),
+    icon: LayoutList,
     adminOnly: true
   }
 ];
