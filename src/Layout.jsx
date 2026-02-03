@@ -32,6 +32,11 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
+    title: "Leads",
+    url: createPageUrl("LeadManagement"),
+    icon: Users,
+  },
+  {
     title: "All Projects",
     url: createPageUrl("Projects"),
     icon: FolderKanban,
