@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ProcurementItem } from "@/entities/ProcurementItem";
 import { Project } from "@/entities/Project";
@@ -64,6 +63,21 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   const [activeTab, setActiveTab] = useState("proposal1");
   const [proposalLinks, setProposalLinks] = useState({ 1: '', 2: '', 3: '' });
   const [isSavingLinks, setIsSavingLinks] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    try {
+      const { auth } = await import("@/api/base44Client");
+      const currentUser = await auth.me();
+      setUser(currentUser);
+    } catch (error) {
+      console.error("Error loading user:", error);
+    }
+  };
 
   useEffect(() => {
     if (isEditing) {
@@ -163,6 +177,10 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
     }
   };
 
+  const canViewSupplierPrices = () => {
+    return user?.role === 'admin' || user?.job_role === 'director' || user?.job_role === 'designer';
+  };
+
   const renderProposal = (proposalNumber) => {
     const proposalItems = items.filter((i) => i.proposal_number === proposalNumber);
     const totalSupplierCost = proposalItems.reduce((sum, i) => {
@@ -191,27 +209,33 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                 <p className="text-sm text-gray-500">{item.notes}</p>
               </CardContent>
               <CardFooter className="flex-col items-start text-sm pt-4 border-t">
-                <div className="w-full flex justify-between">
-                    <span>Supplier:</span>
-                    <span className="font-semibold">
-                        {item.supplier_price?.toLocaleString()} {item.supplier_currency}
-                    </span>
-                </div>
-                <CurrencyConverter value={item.supplier_price} fromCurrency={item.supplier_currency} />
+                {canViewSupplierPrices() && (
+                  <>
+                    <div className="w-full flex justify-between">
+                        <span>Supplier:</span>
+                        <span className="font-semibold">
+                            {item.supplier_price?.toLocaleString()} {item.supplier_currency}
+                        </span>
+                    </div>
+                    <CurrencyConverter value={item.supplier_price} fromCurrency={item.supplier_currency} />
+                  </>
+                )}
                  <div className="w-full flex justify-between mt-2">
                     <span>Selling:</span>
                     <span className="font-semibold text-green-600">
                         {item.selling_price?.toLocaleString()} SGD
                     </span>
                 </div>
-                <div className="flex gap-2 mt-4 self-end">
-                    <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => {setIsEditing(item);setOpenDialog(true);}}>
-                        <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-8 h-8 text-red-500 hover:text-red-700" onClick={() => handleDelete(item.id)}>
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
-                </div>
+                {canViewSupplierPrices() && (
+                  <div className="flex gap-2 mt-4 self-end">
+                      <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => {setIsEditing(item);setOpenDialog(true);}}>
+                          <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="w-8 h-8 text-red-500 hover:text-red-700" onClick={() => handleDelete(item.id)}>
+                          <Trash2 className="w-4 h-4" />
+                      </Button>
+                  </div>
+                )}
               </CardFooter>
             </Card>
           )}
@@ -221,30 +245,32 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
         <p className="text-center py-8 text-gray-500">No items added to this proposal yet.</p>
         }
 
-        <Card className="mt-6 bg-gray-50">
-            <CardHeader>
-                <CardTitle className="text-lg">Proposal {proposalNumber} Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                    <p className="text-sm text-gray-500">Total Supplier Cost (SGD)</p>
-                    <p className="text-xl font-bold">S$ {totalSupplierCost.toLocaleString()}</p>
-                    <p className="text-xs text-gray-400">Note: Only SGD prices are summed up.</p>
-                </div>
-                 <div>
-                    <p className="text-sm text-gray-500">Total Selling Price</p>
-                    <p className="text-xl font-bold text-green-600">S$ {totalSellingPrice.toLocaleString()}</p>
-                </div>
-                 <div>
-                    <p className="text-sm text-gray-500">Estimated Profit</p>
-                    <p className={`text-xl font-bold ${profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>S$ {profit.toLocaleString()}</p>
-                </div>
-                 <div>
-                    <p className="text-sm text-gray-500">Profit Margin</p>
-                    <p className="text-xl font-bold">{margin.toFixed(1)}%</p>
-                </div>
-            </CardContent>
-        </Card>
+        {canViewSupplierPrices() && (
+          <Card className="mt-6 bg-gray-50">
+              <CardHeader>
+                  <CardTitle className="text-lg">Proposal {proposalNumber} Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                      <p className="text-sm text-gray-500">Total Supplier Cost (SGD)</p>
+                      <p className="text-xl font-bold">S$ {totalSupplierCost.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">Note: Only SGD prices are summed up.</p>
+                  </div>
+                   <div>
+                      <p className="text-sm text-gray-500">Total Selling Price</p>
+                      <p className="text-xl font-bold text-green-600">S$ {totalSellingPrice.toLocaleString()}</p>
+                  </div>
+                   <div>
+                      <p className="text-sm text-gray-500">Estimated Profit</p>
+                      <p className={`text-xl font-bold ${profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>S$ {profit.toLocaleString()}</p>
+                  </div>
+                   <div>
+                      <p className="text-sm text-gray-500">Profit Margin</p>
+                      <p className="text-xl font-bold">{margin.toFixed(1)}%</p>
+                  </div>
+              </CardContent>
+          </Card>
+        )}
       </div>);
 
   };
@@ -294,12 +320,14 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                 <TabsTrigger value="proposal2">Proposal 2</TabsTrigger>
                 <TabsTrigger value="proposal3">Proposal 3</TabsTrigger>
               </TabsList>
-              <DialogTrigger asChild>
-                  <Button onClick={() => resetForm(parseInt(activeTab.replace('proposal', '')))}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Item
-                  </Button>
-              </DialogTrigger>
+              {canViewSupplierPrices() && (
+                <DialogTrigger asChild>
+                    <Button onClick={() => resetForm(parseInt(activeTab.replace('proposal', '')))}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Item
+                    </Button>
+                </DialogTrigger>
+              )}
           </div>
           <TabsContent value="proposal1">{renderProposal(1)}</TabsContent>
           <TabsContent value="proposal2">{renderProposal(2)}</TabsContent>
@@ -326,23 +354,25 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                   <Label htmlFor="item_name">Item Name</Label>
                   <Input id="item_name" value={formData.item_name || ''} onChange={(e) => setFormData((f) => ({ ...f, item_name: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                      <Label htmlFor="supplier_price">Supplier Price</Label>
-                      <Input id="supplier_price" type="number" value={formData.supplier_price || ''} onChange={(e) => setFormData((f) => ({ ...f, supplier_price: e.target.value }))} />
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="supplier_currency">Currency</Label>
-                       <Select value={formData.supplier_currency || 'SGD'} onValueChange={(v) => setFormData((f) => ({ ...f, supplier_currency: v }))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="SGD">SGD</SelectItem>
-                              <SelectItem value="CNY">CNY</SelectItem>
-                              <SelectItem value="USD">USD</SelectItem>
-                          </SelectContent>
-                       </Select>
-                  </div>
-              </div>
+              {canViewSupplierPrices() && (
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="supplier_price">Supplier Price</Label>
+                        <Input id="supplier_price" type="number" value={formData.supplier_price || ''} onChange={(e) => setFormData((f) => ({ ...f, supplier_price: e.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="supplier_currency">Currency</Label>
+                         <Select value={formData.supplier_currency || 'SGD'} onValueChange={(v) => setFormData((f) => ({ ...f, supplier_currency: v }))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="SGD">SGD</SelectItem>
+                                <SelectItem value="CNY">CNY</SelectItem>
+                                <SelectItem value="USD">USD</SelectItem>
+                            </SelectContent>
+                         </Select>
+                    </div>
+                </div>
+              )}
                <div className="space-y-2">
                   <Label htmlFor="selling_price">Selling Price (SGD)</Label>
                   <Input id="selling_price" type="number" value={formData.selling_price || ''} onChange={(e) => setFormData((f) => ({ ...f, selling_price: e.target.value }))} />
