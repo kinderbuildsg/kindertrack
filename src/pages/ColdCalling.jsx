@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { 
   Phone, Upload, RefreshCw, Calendar, CheckCircle2, 
-  XCircle, Clock, MessageSquare, Sparkles, ChevronRight
+  XCircle, Clock, MessageSquare, Sparkles, ChevronRight, Plus
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,6 +27,15 @@ export default function ColdCalling() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [csvFile, setCsvFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
+  const [newLead, setNewLead] = useState({
+    company_name: "",
+    contact_person: "",
+    contact_email: "",
+    contact_phone: "",
+    site_address: "",
+    lead_tag: "new"
+  });
 
   useEffect(() => {
     loadData();
@@ -110,6 +119,41 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
     } catch (error) {
       console.error("Error logging call:", error);
       toast.error("Failed to log call");
+    }
+  };
+
+  const handleAddLead = async () => {
+    if (!newLead.company_name || !newLead.contact_person || !newLead.contact_phone) {
+      toast.error("Please fill in MCST name, contact person, and phone number");
+      return;
+    }
+
+    try {
+      await base44.entities.Lead.create({
+        ...newLead,
+        status: "cold",
+        call_status: "not_called",
+        lead_source: "cold_call",
+        assigned_to: user.email,
+        locked_by: user.email,
+        first_contact_date: new Date().toISOString(),
+        project_type: "playground"
+      });
+
+      toast.success("Lead added successfully!");
+      setAddLeadDialogOpen(false);
+      setNewLead({
+        company_name: "",
+        contact_person: "",
+        contact_email: "",
+        contact_phone: "",
+        site_address: "",
+        lead_tag: "new"
+      });
+      loadData();
+    } catch (error) {
+      console.error("Error adding lead:", error);
+      toast.error("Failed to add lead");
     }
   };
 
@@ -211,12 +255,89 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
               <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
+            <Dialog open={addLeadDialogOpen} onOpenChange={setAddLeadDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-green-500 to-green-600">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Lead
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Lead</DialogTitle>
+                  <DialogDescription>
+                    Add a new lead from cold calling. This will be tagged to you.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">MCST Name *</label>
+                    <Input
+                      value={newLead.company_name}
+                      onChange={(e) => setNewLead({ ...newLead, company_name: e.target.value })}
+                      placeholder="e.g., MCST Plan 1234"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Contact Person *</label>
+                    <Input
+                      value={newLead.contact_person}
+                      onChange={(e) => setNewLead({ ...newLead, contact_person: e.target.value })}
+                      placeholder="e.g., John Tan"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Email</label>
+                    <Input
+                      type="email"
+                      value={newLead.contact_email}
+                      onChange={(e) => setNewLead({ ...newLead, contact_email: e.target.value })}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Phone Number *</label>
+                    <Input
+                      value={newLead.contact_phone}
+                      onChange={(e) => setNewLead({ ...newLead, contact_phone: e.target.value })}
+                      placeholder="e.g., 98765432"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Address</label>
+                    <Textarea
+                      value={newLead.site_address}
+                      onChange={(e) => setNewLead({ ...newLead, site_address: e.target.value })}
+                      placeholder="Full address"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Lead Tag</label>
+                    <Select value={newLead.lead_tag} onValueChange={(val) => setNewLead({ ...newLead, lead_tag: val })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="contacted">Contacted</SelectItem>
+                        <SelectItem value="follow_up">Follow Up</SelectItem>
+                        <SelectItem value="qualified">Qualified</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handleAddLead} className="w-full">
+                    Add Lead
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
             {user?.role === 'admin' && (
               <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-gradient-to-r from-sky-500 to-sky-600">
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Contacts
+                    Upload CSV
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -293,10 +414,21 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
                         <h3 className="font-semibold text-gray-900">{lead.contact_person}</h3>
                         <p className="text-sm text-gray-600">{lead.company_name}</p>
                         <p className="text-xs text-gray-500">{lead.contact_phone}</p>
+                        {lead.locked_by && (
+                          <p className="text-xs text-blue-600 mt-1">Owned by: {lead.locked_by}</p>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    {lead.lead_tag && (
+                      <Badge className={
+                        lead.lead_tag === "new" ? "bg-gray-500" :
+                        lead.lead_tag === "contacted" ? "bg-blue-500" :
+                        lead.lead_tag === "follow_up" ? "bg-yellow-500" :
+                        "bg-green-500"
+                      }>{lead.lead_tag}</Badge>
+                    )}
                     <Badge variant="outline">{lead.project_type || "General"}</Badge>
                     <ChevronRight className="w-5 h-5 text-gray-400" />
                   </div>
