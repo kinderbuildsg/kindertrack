@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { Project } from "@/entities/Project";
+import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
+import MultiStepProjectForm from "../components/forms/MultiStepProjectForm";
 
 export default function CreateProject() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [formData, setFormData] = useState({
-    project_title: "", // Added project_title
+    project_title: "",
     client_name: "",
     mcst_school_name: "",
     contact_person: "",
@@ -27,6 +28,12 @@ export default function CreateProject() {
     estimated_value: "",
     notes: ""
   });
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -43,7 +50,7 @@ export default function CreateProject() {
         project_number: `PRJ-${Date.now()}`
       };
 
-      const newProject = await Project.create(projectData);
+      const newProject = await base44.entities.Project.create(projectData);
       navigate(createPageUrl(`ProjectDetails?id=${newProject.id}`));
     } catch (error) {
       console.error("Error creating project:", error);
@@ -70,12 +77,21 @@ export default function CreateProject() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <Card className="shadow-xl">
-            <CardHeader>
-              <CardTitle>Project Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+        {isMobile ? (
+          <MultiStepProjectForm 
+            formData={formData}
+            handleChange={handleChange}
+            handleSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            onCancel={() => navigate(createPageUrl("Dashboard"))}
+          />
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <Card className="shadow-xl">
+              <CardHeader>
+                <CardTitle>Project Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
               {/* Project Title */}
               <div className="space-y-2">
                   <Label htmlFor="project_title">Project Title</Label>
@@ -238,6 +254,7 @@ export default function CreateProject() {
             </CardContent>
           </Card>
         </form>
+        )}
       </div>
     </div>
   );

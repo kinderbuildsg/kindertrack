@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Users, AlertCircle } from "lucide-react";
 import KanbanBoard from "./KanbanBoard";
+import MobileKanban from "./MobileKanban";
 import AnalyticsCharts from "./AnalyticsCharts";
 import StatsOverview from "./StatsOverview";
 
@@ -75,13 +76,22 @@ export default function AdminDashboard({ projects, tasks, user, isLoading, onUpd
       {/* Analytics */}
       <AnalyticsCharts projects={projects} isLoading={isLoading} />
 
-      {/* Full Kanban */}
-      <div className="bg-white rounded-2xl shadow-xl p-6">
+      {/* Full Kanban - Desktop */}
+      <div className="bg-white rounded-2xl shadow-xl p-6 hidden lg:block">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">All Projects Pipeline</h2>
           <p className="text-gray-600">Complete overview of all projects</p>
         </div>
         <KanbanBoard projects={projects} isLoading={isLoading} onUpdate={onUpdate} />
+      </div>
+
+      {/* Mobile View */}
+      <div className="bg-white rounded-2xl shadow-xl p-4 lg:hidden">
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900 mb-1">All Projects</h2>
+          <p className="text-sm text-gray-600">Tap stage dropdown to move projects</p>
+        </div>
+        <MobileKanban projects={projects} onUpdate={onUpdate} />
       </div>
     </div>
   );
