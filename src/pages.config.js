@@ -47,32 +47,30 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import ChangePassword from './pages/ChangePassword';
 import CreateProject from './pages/CreateProject';
 import Dashboard from './pages/Dashboard';
 import LeadManagement from './pages/LeadManagement';
+import PendingApproval from './pages/PendingApproval';
 import ProjectDetails from './pages/ProjectDetails';
 import Projects from './pages/Projects';
-import SurveyManagement from './pages/SurveyManagement';
 import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
-import ChangePassword from './pages/ChangePassword';
-import PendingApproval from './pages/PendingApproval';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "ChangePassword": ChangePassword,
     "CreateProject": CreateProject,
     "Dashboard": Dashboard,
     "LeadManagement": LeadManagement,
+    "PendingApproval": PendingApproval,
     "ProjectDetails": ProjectDetails,
     "Projects": Projects,
-    "SurveyManagement": SurveyManagement,
     "Team": Team,
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
-    "ChangePassword": ChangePassword,
-    "PendingApproval": PendingApproval,
 }
 
 export const pagesConfig = {

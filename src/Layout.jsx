@@ -47,12 +47,6 @@ const navigationItems = [
     icon: Users,
   },
   {
-    title: "Surveys",
-    url: createPageUrl("SurveyManagement"),
-    icon: MessageSquare,
-    adminOnly: true
-  },
-  {
     title: "Templates",
     url: createPageUrl("TemplateManagement"),
     icon: LayoutList,
