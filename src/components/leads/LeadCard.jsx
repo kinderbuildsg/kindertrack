@@ -265,9 +265,10 @@ export default function LeadCard({ lead, statusColors, onUpdate, onConvert, isSe
                     </Button>
                   )}
                 </div>
-              </TabsContent>
+              </div>
+            </TabsContent>
 
-              <TabsContent value="activity" className="mt-4">
+            <TabsContent value="activity" className="mt-4">
                 <LeadActivityTimeline 
                   leadId={lead.id} 
                   onUpdate={() => handleEdit(lead)}
