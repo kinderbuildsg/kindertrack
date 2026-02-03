@@ -36,9 +36,23 @@ export default function ColdCallTracker({ leads, onUpdate }) {
     if (callStatus === 'connected') {
       updateData.status = 'in_contact';
       updateData.last_contact_date = new Date().toISOString().split('T')[0];
+      
+      // Lock lead to first contact person
+      if (!selectedLead.locked_by) {
+        updateData.locked_by = selectedLead.assigned_to;
+        updateData.first_contact_date = new Date().toISOString();
+      }
     }
 
     await base44.entities.Lead.update(selectedLead.id, updateData);
+
+    // Log activity
+    await base44.entities.LeadActivity.create({
+      lead_id: selectedLead.id,
+      activity_type: 'call',
+      description: callNotes || `Call ${callStatus.replace(/_/g, ' ')}`,
+      outcome: callStatus === 'connected' ? 'positive' : callStatus === 'not_interested' ? 'negative' : 'neutral'
+    });
     
     setSelectedLead(null);
     setCallStatus("connected");

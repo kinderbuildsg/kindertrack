@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, TrendingUp, Users, DollarSign, Target, ArrowRight, Upload, Phone } from "lucide-react";
+import { Plus, Search, TrendingUp, Users, DollarSign, Target, ArrowRight, Upload, Phone, BarChart3, RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LeadForm from "../components/leads/LeadForm";
 import LeadCard from "../components/leads/LeadCard";
 import CSVUploader from "../components/leads/CSVUploader";
 import ColdCallTracker from "../components/leads/ColdCallTracker";
+import LeadAnalyticsDashboard from "../components/leads/LeadAnalyticsDashboard";
+import BulkActionsBar from "../components/leads/BulkActionsBar";
 
 export default function LeadManagement() {
   const navigate = useNavigate();
@@ -24,6 +26,8 @@ export default function LeadManagement() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedLeads, setSelectedLeads] = useState([]);
+  const [isCalculatingScores, setIsCalculatingScores] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -46,6 +50,23 @@ export default function LeadManagement() {
 
   const handleConvertToProject = async (lead) => {
     navigate(createPageUrl("CreateProject") + `?from_lead=${lead.id}`);
+  };
+
+  const handleCalculateScores = async () => {
+    setIsCalculatingScores(true);
+    try {
+      await base44.functions.invoke('calculateLeadScore');
+      await loadData();
+    } catch (error) {
+      console.error('Error calculating scores:', error);
+    }
+    setIsCalculatingScores(false);
+  };
+
+  const handleSelectLead = (leadId, checked) => {
+    setSelectedLeads(prev => 
+      checked ? [...prev, leadId] : prev.filter(id => id !== leadId)
+    );
   };
 
   const filteredLeads = leads.filter(lead => {
@@ -92,6 +113,14 @@ export default function LeadManagement() {
             <p className="text-gray-600 mt-1">Track and convert potential clients</p>
           </div>
           <div className="flex gap-2">
+            <Button 
+              onClick={handleCalculateScores}
+              variant="outline"
+              disabled={isCalculatingScores}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isCalculatingScores ? 'animate-spin' : ''}`} />
+              Update Scores
+            </Button>
             <Button 
               onClick={() => setShowCSVUploader(true)}
               variant="outline"
@@ -183,7 +212,7 @@ export default function LeadManagement() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-3 bg-white shadow-md">
             <TabsTrigger value="all">
               <Target className="w-4 h-4 mr-2" />
               All Leads
@@ -191,6 +220,10 @@ export default function LeadManagement() {
             <TabsTrigger value="coldcall">
               <Phone className="w-4 h-4 mr-2" />
               Cold Call Tracker
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics
             </TabsTrigger>
           </TabsList>
 
@@ -234,6 +267,8 @@ export default function LeadManagement() {
                       statusColors={statusColors}
                       onUpdate={loadData}
                       onConvert={handleConvertToProject}
+                      isSelected={selectedLeads.includes(lead.id)}
+                      onSelect={handleSelectLead}
                     />
                   ))}
                 </div>
@@ -250,7 +285,18 @@ export default function LeadManagement() {
           <TabsContent value="coldcall" className="mt-6">
             <ColdCallTracker leads={leads} onUpdate={loadData} />
           </TabsContent>
+
+          <TabsContent value="analytics" className="mt-6">
+            <LeadAnalyticsDashboard leads={leads} />
+          </TabsContent>
         </Tabs>
+
+        <BulkActionsBar
+          selectedLeads={selectedLeads}
+          allLeads={leads}
+          onUpdate={loadData}
+          onClear={() => setSelectedLeads([])}
+        />
       </div>
     </div>
   );
