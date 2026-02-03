@@ -26,6 +26,7 @@ import AdminDashboard from "../components/dashboard/AdminDashboard";
 import DesignerDashboard from "../components/dashboard/DesignerDashboard";
 import EmployeeDashboard from "../components/dashboard/EmployeeDashboard";
 import FinanceDashboard from "../components/dashboard/FinanceDashboard";
+import CommissionWidget from "../components/dashboard/CommissionWidget";
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -230,6 +231,11 @@ export default function Dashboard() {
 
         {/* Follow-Up Reminders */}
         <FollowUpList user={user} />
+
+        {/* Commission Widget for Sales Team */}
+        {user && user.role !== 'admin' && (
+          <CommissionWidget user={user} />
+        )}
 
         {/* Role-Based Dashboard */}
         {renderDashboard()}
