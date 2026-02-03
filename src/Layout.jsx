@@ -32,6 +32,11 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
+    title: "Cold Calling",
+    url: createPageUrl("ColdCalling"),
+    icon: MessageSquare,
+  },
+  {
     title: "Leads",
     url: createPageUrl("LeadManagement"),
     icon: Users,

@@ -57,6 +57,7 @@ import Projects from './pages/Projects';
 import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
+import ColdCalling from './pages/ColdCalling';
 import __Layout from './Layout.jsx';
 
 
@@ -71,6 +72,7 @@ export const PAGES = {
     "Team": Team,
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
+    "ColdCalling": ColdCalling,
 }
 
 export const pagesConfig = {
