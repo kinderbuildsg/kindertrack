@@ -3,7 +3,30 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { project_id, commission_type } = await req.json();
+        const payload = await req.json();
+        
+        // Check if this is from an automation (has event, data, old_data)
+        let project_id, commission_type;
+        
+        if (payload.event && payload.data) {
+            // Called from automation
+            const { data, old_data } = payload;
+            project_id = data.id;
+            
+            // Determine which payment was updated
+            if (data.payment_40_received && !old_data?.payment_40_received) {
+                commission_type = 'deposit';
+            } else if (data.payment_30_final_received && !old_data?.payment_30_final_received) {
+                commission_type = 'final';
+            } else {
+                // No relevant payment change, exit
+                return Response.json({ message: 'No commission calculation needed' });
+            }
+        } else {
+            // Called manually
+            project_id = payload.project_id;
+            commission_type = payload.commission_type;
+        }
 
         // Get project details
         const projects = await base44.asServiceRole.entities.Project.filter({ id: project_id });
