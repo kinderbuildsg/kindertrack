@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Phone, Mail, Users, Calendar, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import AppointmentScheduler from "../calendar/AppointmentScheduler";
 
 export default function ProjectCommunications({ project, communications, onUpdate }) {
   const [isAdding, setIsAdding] = useState(false);
@@ -59,6 +60,8 @@ export default function ProjectCommunications({ project, communications, onUpdat
 
   return (
     <div className="space-y-6">
+      <AppointmentScheduler project={project} onSuccess={onUpdate} />
+      
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Client Communications Log</CardTitle>
