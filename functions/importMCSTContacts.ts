@@ -11,40 +11,28 @@ Deno.serve(async (req) => {
 
         const { file_url } = await req.json();
 
-        // Extract data from CSV
-        const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-            file_url: file_url,
-            json_schema: {
-                type: "object",
-                properties: {
-                    contacts: {
-                        type: "array",
-                        items: {
-                            type: "object",
-                            properties: {
-                                usr_devtname: { type: "string" },
-                                devt_location: { type: "string" },
-                                mcst_houseno: { type: "string" },
-                                mcst_roadname: { type: "string" },
-                                mcst_buildingname: { type: "string" },
-                                mcst_postalcode: { type: "string" },
-                                mcst_telno: { type: "string" },
-                                managementname: { type: "string" },
-                                management_tel_no: { type: "string" },
-                                MCContact: { type: "string" }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        if (result.status !== "success" || !result.output.contacts) {
-            return Response.json({ error: 'Failed to extract data from CSV' }, { status: 400 });
-        }
+        // Fetch and parse CSV directly
+        const csvResponse = await fetch(file_url);
+        const csvText = await csvResponse.text();
+        const lines = csvText.split('\n').slice(1); // Skip header
 
         // Transform and create leads
-        const leadsToCreate = result.output.contacts.map(contact => {
+        const leadsToCreate = lines.map(line => {
+            if (!line.trim()) return null;
+            
+            const parts = line.split(',');
+            const contact = {
+                usr_devtname: parts[4] || '',
+                devt_location: parts[5] || '',
+                mcst_houseno: parts[6] || '',
+                mcst_roadname: parts[7] || '',
+                mcst_buildingname: parts[9] || '',
+                mcst_postalcode: parts[10] || '',
+                mcst_telno: parts[11] || '',
+                managementname: parts[14] || '',
+                management_tel_no: parts[15] || '',
+                MCContact: parts[17] || ''
+            };
             // Build address
             const addressParts = [
                 contact.mcst_houseno !== 'na' ? contact.mcst_houseno : '',
@@ -78,7 +66,7 @@ Deno.serve(async (req) => {
                 assigned_to: user.email,
                 notes: `MCST: ${contact.managementname !== 'na' ? contact.managementname : 'N/A'}`
             };
-        }).filter(lead => lead.site_address); // Only include leads with address
+        }).filter(lead => lead && lead.site_address); // Only include valid leads with address
 
         // Bulk create leads
         const createdLeads = await base44.asServiceRole.entities.Lead.bulkCreate(leadsToCreate);
