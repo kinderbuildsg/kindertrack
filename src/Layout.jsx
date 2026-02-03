@@ -52,6 +52,12 @@ const navigationItems = [
     url: createPageUrl("TemplateManagement"),
     icon: LayoutList,
     adminOnly: true
+  },
+  {
+    title: "Users",
+    url: createPageUrl("UserManagement"),
+    icon: Users,
+    adminOnly: true
   }
 ];
 
