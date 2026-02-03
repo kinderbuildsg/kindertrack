@@ -91,7 +91,7 @@ export default function Layout({ children, currentPageName }) {
                 <FolderKanban className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-xl text-gray-900">KinderTrack</h2>
+                <h2 className="font-bold text-xl text-gray-900">Kinderbuild Projects</h2>
                 <p className="text-xs text-gray-500">Project Manager</p>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function Layout({ children, currentPageName }) {
           <header className="bg-white border-b border-[var(--border)] px-6 py-4 md:hidden">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200" />
-              <h1 className="text-xl font-bold text-gray-900">KinderTrack</h1>
+              <h1 className="text-xl font-bold text-gray-900">Kinderbuild Projects</h1>
             </div>
           </header>
 
