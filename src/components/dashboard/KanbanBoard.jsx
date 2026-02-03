@@ -1,16 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Project } from "@/entities/Project";
+import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
   User, 
   DollarSign,
   Clock,
-  MapPin
+  MapPin,
+  MessageSquare,
+  CheckSquare
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import QuickUpdateDialog from "../quick-actions/QuickUpdateDialog";
 
 const stages = [
   { id: "cold_outreach", name: "Cold Outreach", color: "bg-gray-100 border-gray-300", textColor: "text-gray-700" },
@@ -29,7 +34,9 @@ const priorityColors = {
   urgent: "bg-red-100 text-red-800"
 };
 
-export default function KanbanBoard({ projects, isLoading, onUpdate }) {
+export default function KanbanBoard({ projects, isLoading, onUpdate, selectedProjects = [], onSelectProject }) {
+  const [quickUpdateProject, setQuickUpdateProject] = useState(null);
+
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
     
@@ -38,11 +45,27 @@ export default function KanbanBoard({ projects, isLoading, onUpdate }) {
     const newStage = destination.droppableId;
     
     try {
-      await Project.update(projectId, { stage: newStage });
+      await base44.entities.Project.update(projectId, { stage: newStage });
       onUpdate();
     } catch (error) {
       console.error("Error updating project stage:", error);
     }
+  };
+
+  const handleQuickUpdate = (e, project) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setQuickUpdateProject(project);
+  };
+
+  const handleSelectProject = (e, project) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSelectProject?.(project);
+  };
+
+  const isSelected = (projectId) => {
+    return selectedProjects.some(p => p.id === projectId);
   };
 
   const getProjectsByStage = (stageId) => {
@@ -114,13 +137,22 @@ export default function KanbanBoard({ projects, isLoading, onUpdate }) {
                           <Link to={createPageUrl(`ProjectDetails?id=${project.id}`)}>
                             <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-4 cursor-pointer border border-gray-200">
                               <div className="flex items-start justify-between mb-3">
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-bold text-gray-900 mb-1 line-clamp-1">
-                                    {project.project_title || project.client_name}
-                                  </h4>
-                                  <p className="text-xs text-gray-500 line-clamp-1">
-                                    Client: {project.client_name}
-                                  </p>
+                                <div className="flex items-start gap-2 flex-1 min-w-0">
+                                  {onSelectProject && (
+                                    <Checkbox
+                                      checked={isSelected(project.id)}
+                                      onClick={(e) => handleSelectProject(e, project)}
+                                      className="mt-1"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-gray-900 mb-1 line-clamp-1">
+                                      {project.project_title || project.client_name}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 line-clamp-1">
+                                      Client: {project.client_name}
+                                    </p>
+                                  </div>
                                 </div>
                                 <Badge className={priorityColors[project.priority || "medium"]}>
                                   {project.priority || "medium"}
@@ -166,6 +198,19 @@ export default function KanbanBoard({ projects, isLoading, onUpdate }) {
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Quick Actions */}
+                              <div className="mt-2 pt-2 border-t border-gray-100">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full text-xs"
+                                  onClick={(e) => handleQuickUpdate(e, project)}
+                                >
+                                  <MessageSquare className="w-3 h-3 mr-1" />
+                                  Quick Update
+                                </Button>
+                              </div>
                             </div>
                           </Link>
                         </div>
@@ -185,6 +230,15 @@ export default function KanbanBoard({ projects, isLoading, onUpdate }) {
           </div>
         ))}
       </div>
+
+      {quickUpdateProject && (
+        <QuickUpdateDialog
+          project={quickUpdateProject}
+          isOpen={!!quickUpdateProject}
+          onClose={() => setQuickUpdateProject(null)}
+          onSuccess={onUpdate}
+        />
+      )}
     </DragDropContext>
   );
 }

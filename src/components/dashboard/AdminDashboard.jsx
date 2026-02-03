@@ -6,7 +6,7 @@ import MobileKanban from "./MobileKanban";
 import AnalyticsCharts from "./AnalyticsCharts";
 import StatsOverview from "./StatsOverview";
 
-export default function AdminDashboard({ projects, tasks, user, isLoading, onUpdate }) {
+export default function AdminDashboard({ projects, tasks, user, isLoading, onUpdate, selectedProjects, onSelectProject }) {
   const totalRevenue = projects.reduce((sum, p) => sum + (p.actual_value || p.estimated_value || 0), 0);
   const activeProjects = projects.filter(p => p.stage !== 'completion' && p.stage !== 'post_maintenance').length;
   const overduePayments = projects.filter(p => 
@@ -82,7 +82,13 @@ export default function AdminDashboard({ projects, tasks, user, isLoading, onUpd
           <h2 className="text-2xl font-bold text-gray-900 mb-2">All Projects Pipeline</h2>
           <p className="text-gray-600">Complete overview of all projects</p>
         </div>
-        <KanbanBoard projects={projects} isLoading={isLoading} onUpdate={onUpdate} />
+        <KanbanBoard 
+          projects={projects} 
+          isLoading={isLoading} 
+          onUpdate={onUpdate}
+          selectedProjects={selectedProjects}
+          onSelectProject={onSelectProject}
+        />
       </div>
 
       {/* Mobile View */}

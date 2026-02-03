@@ -1,13 +1,12 @@
-
 import React, { useState } from "react";
-import { Attachment } from "@/entities/Attachment";
-import { UploadFile } from "@/integrations/Core";
-import { ProjectUpdate } from "@/entities/ProjectUpdate"; // Added import
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileText, Image, ExternalLink, Trash2 } from "lucide-react";
+import { Upload, FileText, Image, ExternalLink, Trash2, Eye, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const fileTypeLabels = {
   design: "Design",
@@ -26,6 +25,7 @@ export default function ProjectFiles({ project, attachments, onUpload }) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadFileType, setUploadFileType] = useState("photo_progress");
   const [uploadDescription, setUploadDescription] = useState("");
+  const [previewFile, setPreviewFile] = useState(null);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -33,9 +33,9 @@ export default function ProjectFiles({ project, attachments, onUpload }) {
 
     setIsUploading(true);
     try {
-      const { file_url } = await UploadFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       
-      await Attachment.create({
+      await base44.entities.Attachment.create({
         project_id: project.id,
         file_url: file_url,
         file_name: file.name,
@@ -44,10 +44,9 @@ export default function ProjectFiles({ project, attachments, onUpload }) {
         description: uploadDescription
       });
 
-      // Log the activity
-      await ProjectUpdate.create({
+      await base44.entities.ProjectUpdate.create({
         project_id: project.id,
-        update_type: 'file_upload', // Using 'file_upload' type
+        update_type: 'comment',
         content: `Uploaded ${fileTypeLabels[uploadFileType]} file: "${file.name}"`
       });
 
@@ -65,11 +64,19 @@ export default function ProjectFiles({ project, attachments, onUpload }) {
     if (!confirm("Are you sure you want to delete this file?")) return;
     
     try {
-      await Attachment.delete(attachmentId);
+      await base44.entities.Attachment.delete(attachmentId);
       onUpload();
     } catch (error) {
       console.error("Error deleting file:", error);
     }
+  };
+
+  const isImageFile = (fileName) => {
+    return fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+  };
+
+  const isPdfFile = (fileName) => {
+    return fileName.match(/\.pdf$/i);
   };
 
   const groupedAttachments = attachments.reduce((acc, att) => {
@@ -148,17 +155,17 @@ export default function ProjectFiles({ project, attachments, onUpload }) {
               {files.map(file => (
                 <div key={file.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {file.file_name.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                        <Image className="w-5 h-5 text-blue-500" />
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {isImageFile(file.file_name) ? (
+                        <Image className="w-5 h-5 text-blue-500 flex-shrink-0" />
                       ) : (
-                        <FileText className="w-5 h-5 text-gray-500" />
+                        <FileText className="w-5 h-5 text-gray-500 flex-shrink-0" />
                       )}
                       <span className="text-sm font-medium truncate">{file.file_name}</span>
                     </div>
                     <button
                       onClick={() => handleDeleteFile(file.id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-700 flex-shrink-0 ml-2"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -168,22 +175,48 @@ export default function ProjectFiles({ project, attachments, onUpload }) {
                     <p className="text-xs text-gray-600 mb-2">{file.description}</p>
                   )}
 
-                  {file.file_name.match(/\.(jpg|jpeg|png|gif)$/i) && (
-                    <img 
-                      src={file.file_url} 
-                      alt={file.file_name}
-                      className="w-full h-32 object-cover rounded mb-2"
-                    />
+                  {isImageFile(file.file_name) && (
+                    <div 
+                      className="w-full h-32 mb-2 cursor-pointer overflow-hidden rounded"
+                      onClick={() => setPreviewFile(file)}
+                    >
+                      <img 
+                        src={file.file_url} 
+                        alt={file.file_name}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
+                      />
+                    </div>
                   )}
 
-                  <a
-                    href={file.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-sky-600 hover:text-sky-700 flex items-center gap-1"
-                  >
-                    View File <ExternalLink className="w-3 h-3" />
-                  </a>
+                  {isPdfFile(file.file_name) && (
+                    <div className="bg-red-50 p-4 rounded mb-2 text-center">
+                      <FileText className="w-8 h-8 text-red-500 mx-auto mb-1" />
+                      <p className="text-xs text-gray-600">PDF Document</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPreviewFile(file)}
+                      className="flex-1 text-xs"
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      Preview
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="flex-1 text-xs"
+                    >
+                      <a href={file.file_url} download target="_blank" rel="noopener noreferrer">
+                        <Download className="w-3 h-3 mr-1" />
+                        Download
+                      </a>
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -199,6 +232,43 @@ export default function ProjectFiles({ project, attachments, onUpload }) {
             <p className="text-sm text-gray-400 mt-1">Upload documents, photos, and other files above</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Preview Dialog */}
+      {previewFile && (
+        <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>{previewFile.file_name}</DialogTitle>
+            </DialogHeader>
+            <div className="overflow-auto max-h-[70vh]">
+              {isImageFile(previewFile.file_name) ? (
+                <img 
+                  src={previewFile.file_url} 
+                  alt={previewFile.file_name}
+                  className="w-full h-auto"
+                />
+              ) : isPdfFile(previewFile.file_name) ? (
+                <iframe 
+                  src={previewFile.file_url} 
+                  className="w-full h-[70vh]"
+                  title={previewFile.file_name}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-4">Preview not available for this file type</p>
+                  <Button asChild>
+                    <a href={previewFile.file_url} download target="_blank" rel="noopener noreferrer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download File
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

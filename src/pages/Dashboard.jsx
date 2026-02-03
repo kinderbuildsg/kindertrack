@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Project } from "@/entities/Project";
-import { Task } from "@/entities/Task";
-import { User } from "@/entities/User";
+import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import {
   RefreshCw,
-  Search,
+  Search as SearchIcon,
   Filter
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import GlobalSearch from "../components/search/GlobalSearch";
+import SavedFilters from "../components/search/SavedFilters";
+import BulkActionsBar from "../components/quick-actions/BulkActionsBar";
 
 import KanbanBoard from "../components/dashboard/KanbanBoard";
 import MyTasksWidget from "../components/dashboard/MyTasksWidget";
@@ -32,6 +33,8 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [selectedProjects, setSelectedProjects] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -40,20 +43,38 @@ export default function Dashboard() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const currentUser = await User.me();
+      const currentUser = await base44.auth.me();
       setUser(currentUser);
       
       const [projectsData, tasksData] = await Promise.all([
-        Project.list("-updated_date"),
-        Task.list("-due_date", 200)
+        base44.entities.Project.list("-updated_date"),
+        base44.entities.Task.list("-due_date", 200)
       ]);
       
       setProjects(projectsData);
       setTasks(tasksData);
+      setSelectedProjects([]);
     } catch (error) {
       console.error("Error loading data:", error);
     }
     setIsLoading(false);
+  };
+
+  const handleApplyFilter = (filterConfig) => {
+    setFilter('custom');
+    if (filterConfig.stage) setFilter(filterConfig.stage);
+    if (filterConfig.priority) setFilter(filterConfig.priority);
+  };
+
+  const handleSelectProject = (project) => {
+    setSelectedProjects(prev => {
+      const exists = prev.find(p => p.id === project.id);
+      if (exists) {
+        return prev.filter(p => p.id !== project.id);
+      } else {
+        return [...prev, project];
+      }
+    });
   };
 
   const handleProjectUpdate = () => {
@@ -93,13 +114,29 @@ export default function Dashboard() {
     const filteredProjects = getFilteredProjects();
 
     if (jobRole === 'admin' || user?.role === 'admin') {
-      return <AdminDashboard projects={filteredProjects} tasks={tasks} user={user} isLoading={isLoading} onUpdate={handleProjectUpdate} />;
+      return <AdminDashboard 
+        projects={filteredProjects} 
+        tasks={tasks} 
+        user={user} 
+        isLoading={isLoading} 
+        onUpdate={handleProjectUpdate}
+        selectedProjects={selectedProjects}
+        onSelectProject={handleSelectProject}
+      />;
     } else if (jobRole === 'designer') {
       return <DesignerDashboard projects={filteredProjects} tasks={tasks} user={user} isLoading={isLoading} />;
     } else if (jobRole === 'finance') {
       return <FinanceDashboard projects={filteredProjects} tasks={tasks} user={user} isLoading={isLoading} />;
     } else {
-      return <EmployeeDashboard projects={filteredProjects} tasks={tasks} user={user} isLoading={isLoading} onUpdate={handleProjectUpdate} />;
+      return <EmployeeDashboard 
+        projects={filteredProjects} 
+        tasks={tasks} 
+        user={user} 
+        isLoading={isLoading} 
+        onUpdate={handleProjectUpdate}
+        selectedProjects={selectedProjects}
+        onSelectProject={handleSelectProject}
+      />;
     }
   };
 
@@ -138,12 +175,14 @@ export default function Dashboard() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Search projects by client, title, or contact..."
+                  placeholder="Search projects... (Click for advanced search)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  onClick={() => setIsGlobalSearchOpen(true)}
+                  className="pl-10 cursor-pointer"
+                  readOnly
                 />
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -175,6 +214,11 @@ export default function Dashboard() {
                 >
                   Urgent
                 </Button>
+                <SavedFilters 
+                  currentFilters={{ filter, searchQuery }}
+                  onApplyFilter={handleApplyFilter}
+                  user={user}
+                />
               </div>
             </div>
           </CardContent>
@@ -185,6 +229,22 @@ export default function Dashboard() {
 
         {/* Role-Based Dashboard */}
         {renderDashboard()}
+
+        {/* Global Search */}
+        <GlobalSearch 
+          isOpen={isGlobalSearchOpen} 
+          onClose={() => setIsGlobalSearchOpen(false)} 
+        />
+
+        {/* Bulk Actions */}
+        <BulkActionsBar
+          selectedProjects={selectedProjects}
+          onClear={() => setSelectedProjects([])}
+          onComplete={() => {
+            loadData();
+            setSelectedProjects([]);
+          }}
+        />
       </div>
     </div>
   );
