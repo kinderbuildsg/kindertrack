@@ -64,6 +64,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   const [proposalLinks, setProposalLinks] = useState({ 1: '', 2: '', 3: '' });
   const [isSavingLinks, setIsSavingLinks] = useState(false);
   const [user, setUser] = useState(null);
+  const [viewMode, setViewMode] = useState("client");
 
   useEffect(() => {
     loadUser();
@@ -312,44 +313,154 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   };
 
+  const isAdmin = () => {
+    return user?.role === 'admin' || user?.job_role === 'director';
+  };
+
   return (
     <>
-      <Card className="mb-6 shadow-lg">
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <LinkIcon className="w-5 h-5 text-sky-500" />
-                Proposal Links
+      {isAdmin() && (
+        <div className="mb-6 flex gap-2">
+          <Button 
+            variant={viewMode === "client" ? "default" : "outline"}
+            onClick={() => setViewMode("client")}
+          >
+            Client View
+          </Button>
+          <Button 
+            variant={viewMode === "admin" ? "default" : "outline"}
+            onClick={() => setViewMode("admin")}
+          >
+            Admin Management
+          </Button>
+        </div>
+      )}
+
+      {viewMode === "admin" && isAdmin() ? (
+        <Card className="mb-6 shadow-lg border-2 border-red-200 bg-red-50">
+          <CardHeader className="bg-red-100">
+            <CardTitle className="flex items-center gap-2 text-red-800">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Admin-Only Procurement Management
             </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            {[1, 2, 3].map(num => (
-                <div key={num} className="flex items-center gap-2">
-                    <Label htmlFor={`proposal-link-${num}`} className="w-24 shrink-0">Proposal {num}</Label>
-                    <Input
-                        id={`proposal-link-${num}`}
-                        placeholder="Paste Google Drive link here..."
-                        value={proposalLinks[num] || ''}
-                        onChange={(e) => handleLinkChange(num, e.target.value)}
-                    />
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={!proposalLinks[num]}
-                        onClick={() => window.open(proposalLinks[num], '_blank')}
-                    >
-                        <ExternalLink className="w-4 h-4" />
-                    </Button>
-                </div>
-            ))}
-        </CardContent>
-        <CardFooter>
-            <Button onClick={handleSaveLinks} disabled={isSavingLinks}>
-                {isSavingLinks ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                Save Links
-            </Button>
-        </CardFooter>
-      </Card>
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+            <p className="text-sm text-red-700">Manage supplier prices, product details, and inventory across all proposals</p>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">All Products</h3>
+              <Button onClick={() => { resetForm(1); setOpenDialog(true); }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Product
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {items.map((item) => (
+                <Card key={item.id} className={`${item.is_confirmed ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-gray-300'}`}>
+                  <CardContent className="pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      <div className="flex items-center gap-3">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.item_name} className="w-16 h-16 object-cover rounded" />
+                        ) : (
+                          <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                            <Image className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold">{item.item_name}</p>
+                          <p className="text-xs text-gray-500">Proposal {item.proposal_number}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">Supplier Price</Label>
+                        <p className="font-semibold text-blue-600">${item.supplier_price?.toLocaleString()} {item.supplier_currency}</p>
+                        <CurrencyConverter value={item.supplier_price} fromCurrency={item.supplier_currency} />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">Selling Price</Label>
+                        <p className="font-semibold text-green-600">S${item.selling_price?.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">Notes</Label>
+                        <p className="text-sm text-gray-700">{item.notes || 'No notes'}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm"
+                          variant={item.is_confirmed ? "secondary" : "default"}
+                          onClick={async () => {
+                            await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                            onUpdate();
+                          }}
+                        >
+                          {item.is_confirmed ? '✓ Confirmed' : 'Confirm'}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => { setIsEditing(item); setOpenDialog(true); }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="text-red-500"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {items.length === 0 && (
+                <p className="text-center py-8 text-gray-500">No products added yet</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="mb-6 shadow-lg">
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="w-5 h-5 text-sky-500" />
+                  Proposal Links
+              </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              {[1, 2, 3].map(num => (
+                  <div key={num} className="flex items-center gap-2">
+                      <Label htmlFor={`proposal-link-${num}`} className="w-24 shrink-0">Proposal {num}</Label>
+                      <Input
+                          id={`proposal-link-${num}`}
+                          placeholder="Paste Google Drive link here..."
+                          value={proposalLinks[num] || ''}
+                          onChange={(e) => handleLinkChange(num, e.target.value)}
+                      />
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={!proposalLinks[num]}
+                          onClick={() => window.open(proposalLinks[num], '_blank')}
+                      >
+                          <ExternalLink className="w-4 h-4" />
+                      </Button>
+                  </div>
+              ))}
+          </CardContent>
+          <CardFooter>
+              <Button onClick={handleSaveLinks} disabled={isSavingLinks}>
+                  {isSavingLinks ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  Save Links
+              </Button>
+          </CardFooter>
+        </Card>
+      )}
+      {viewMode === "client" && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex justify-between items-center mb-4">
               <TabsList>
@@ -370,6 +481,9 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
           <TabsContent value="proposal2">{renderProposal(2)}</TabsContent>
           <TabsContent value="proposal3">{renderProposal(3)}</TabsContent>
         </Tabs>
+      )}
+
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
 
         <DialogContent className="bg-slate-50 p-6 fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg sm:max-w-[600px]">
           <DialogHeader>
