@@ -49,44 +49,44 @@
  */
 import ChangePassword from './pages/ChangePassword';
 import ColdCalling from './pages/ColdCalling';
+import CompletionPage from './pages/CompletionPage';
 import CreateProject from './pages/CreateProject';
 import Dashboard from './pages/Dashboard';
+import DealClosedPage from './pages/DealClosedPage';
+import DesignProposalPage from './pages/DesignProposalPage';
 import LeadManagement from './pages/LeadManagement';
+import MaintenancePage from './pages/MaintenancePage';
 import PendingApproval from './pages/PendingApproval';
+import ProcurementPage from './pages/ProcurementPage';
 import ProjectDetails from './pages/ProjectDetails';
 import Projects from './pages/Projects';
+import SiteEvaluationPage from './pages/SiteEvaluationPage';
 import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
-import SiteEvaluationPage from './pages/SiteEvaluationPage';
-import DesignProposalPage from './pages/DesignProposalPage';
-import DealClosedPage from './pages/DealClosedPage';
-import ProcurementPage from './pages/ProcurementPage';
 import WorkProgressPage from './pages/WorkProgressPage';
-import CompletionPage from './pages/CompletionPage';
-import MaintenancePage from './pages/MaintenancePage';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "ChangePassword": ChangePassword,
     "ColdCalling": ColdCalling,
+    "CompletionPage": CompletionPage,
     "CreateProject": CreateProject,
     "Dashboard": Dashboard,
+    "DealClosedPage": DealClosedPage,
+    "DesignProposalPage": DesignProposalPage,
     "LeadManagement": LeadManagement,
+    "MaintenancePage": MaintenancePage,
     "PendingApproval": PendingApproval,
+    "ProcurementPage": ProcurementPage,
     "ProjectDetails": ProjectDetails,
     "Projects": Projects,
+    "SiteEvaluationPage": SiteEvaluationPage,
     "Team": Team,
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
-    "SiteEvaluationPage": SiteEvaluationPage,
-    "DesignProposalPage": DesignProposalPage,
-    "DealClosedPage": DealClosedPage,
-    "ProcurementPage": ProcurementPage,
     "WorkProgressPage": WorkProgressPage,
-    "CompletionPage": CompletionPage,
-    "MaintenancePage": MaintenancePage,
 }
 
 export const pagesConfig = {

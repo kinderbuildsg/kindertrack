@@ -22,8 +22,12 @@ export default function ColdCalling() {
   const [callStatus, setCallStatus] = useState("not_called");
   const [callbackDate, setCallbackDate] = useState("");
   const [scripts, setScripts] = useState({});
-  const [generatingScript, setGeneratingScript] = useState({});
-  const [scriptType, setScriptType] = useState("professional");
+  const [bookingAppointment, setBookingAppointment] = useState(false);
+  const [appointmentData, setAppointmentData] = useState({
+    date: '',
+    time: '',
+    location: ''
+  });
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [csvFile, setCsvFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -58,38 +62,72 @@ export default function ColdCalling() {
     setIsLoading(false);
   };
 
-  const generateScript = async (lead, type) => {
-    setGeneratingScript(prev => ({ ...prev, [lead.id]: type }));
-    try {
-      const prompt = `Generate a ${type} cold calling script for our playground and fitness corner construction company called Kinderbuild Projects. 
+  const generateScript = (lead) => {
+    const defaultScript = `Hi, I'm ${user?.full_name || 'calling'} from Kinderbuild Pte Ltd. We are a playground construction specialist.
 
-Target: ${lead.contact_person} from ${lead.company_name || "their organization"}
-Context: ${lead.project_type || "playground/fitness corner project"}
+I'd like to check if you have any playground or fitness corner that requires repair or replacement?
 
-The script should:
-- Be ${type === "professional" ? "formal and business-focused" : type === "friendly" ? "warm and conversational" : "direct and value-focused"}
-- Introduce Kinderbuild Projects briefly
-- Highlight our expertise in playground and fitness corner construction
-- Mention we offer free site evaluations
-- Ask if they'd be interested in scheduling a site visit
-- Handle potential objections gracefully
-- Keep it under 2 minutes when spoken
+We do offer a free site visit to help evaluate the playground or fitness corner if you like.
 
-Format the script with clear sections: Introduction, Value Proposition, Call to Action`;
+If so, thank you and let me know which date works for you.`;
 
-      const response = await base44.integrations.Core.InvokeLLM({ prompt });
-      
-      setScripts(prev => ({ 
-        ...prev, 
-        [lead.id]: { ...prev[lead.id], [type]: response } 
-      }));
-      
-      toast.success("Script generated successfully!");
-    } catch (error) {
-      console.error("Error generating script:", error);
-      toast.error("Failed to generate script");
+    setScripts(prev => ({ 
+      ...prev, 
+      [lead.id]: defaultScript
+    }));
+  };
+
+  const handleBookAppointment = async () => {
+    if (!appointmentData.date || !appointmentData.time) {
+      toast.error("Please select date and time");
+      return;
     }
-    setGeneratingScript(prev => ({ ...prev, [lead.id]: null }));
+
+    try {
+      const dateTimeString = `${appointmentData.date}T${appointmentData.time}:00`;
+      const startDateTime = new Date(dateTimeString);
+      const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 1 hour later
+
+      // Create Google Calendar event
+      const { createCalendarEvent } = await import('@/functions/createCalendarEvent');
+      const calendarResult = await createCalendarEvent({
+        project_id: selectedLead.id,
+        summary: `Site Evaluation - ${selectedLead.contact_person}`,
+        location: appointmentData.location || selectedLead.site_address,
+        description: `Free site evaluation for ${selectedLead.company_name}\nContact: ${selectedLead.contact_phone}`,
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString()
+      });
+
+      // Update lead with appointment info and tag to user
+      await base44.entities.Lead.update(selectedLead.id, {
+        call_status: "callback_scheduled",
+        callback_date: dateTimeString,
+        last_call_attempt: new Date().toISOString(),
+        call_notes: callNotes + `\n\nAppointment booked for ${startDateTime.toLocaleString('en-SG')}`,
+        locked_by: user.email,
+        assigned_to: user.email,
+        last_contact_date: new Date().toISOString().split('T')[0]
+      });
+
+      await base44.entities.LeadActivity.create({
+        lead_id: selectedLead.id,
+        activity_type: "meeting",
+        description: `Site evaluation scheduled for ${startDateTime.toLocaleString('en-SG')} at ${appointmentData.location || selectedLead.site_address}`,
+        outcome: "positive"
+      });
+
+      toast.success("Appointment booked and synced to Google Calendar!");
+      setSelectedLead(null);
+      setCallNotes("");
+      setCallStatus("not_called");
+      setBookingAppointment(false);
+      setAppointmentData({ date: '', time: '', location: '' });
+      loadData();
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      toast.error("Failed to book appointment");
+    }
   };
 
   const handleCallComplete = async (lead) => {
@@ -100,6 +138,7 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
         callback_date: callbackDate || null,
         call_notes: callNotes,
         locked_by: user.email,
+        assigned_to: user.email,
         last_contact_date: new Date().toISOString().split('T')[0]
       });
 
@@ -468,111 +507,144 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
             
             {selectedLead && (
               <div className="space-y-6 py-4">
-                {/* Script Generator */}
+                {/* Call Script */}
                 <Card className="bg-gradient-to-br from-sky-50 to-blue-50">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-sky-600" />
-                      AI-Generated Call Scripts
+                      <MessageSquare className="w-5 h-5 text-sky-600" />
+                      Call Script
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex gap-2 flex-wrap">
-                      {["professional", "friendly", "direct"].map((type) => (
-                        <Button
-                          key={type}
-                          variant={scriptType === type ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => {
-                            setScriptType(type);
-                            if (!scripts[selectedLead.id]?.[type]) {
-                              generateScript(selectedLead, type);
-                            }
-                          }}
-                          disabled={generatingScript[selectedLead.id] === type}
-                        >
-                          {generatingScript[selectedLead.id] === type ? (
-                            <>
-                              <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
-                              Generating...
-                            </>
-                          ) : (
-                            type.charAt(0).toUpperCase() + type.slice(1)
-                          )}
-                        </Button>
-                      ))}
-                    </div>
+                    {!scripts[selectedLead.id] && (
+                      <Button
+                        onClick={() => generateScript(selectedLead)}
+                        className="w-full mb-4"
+                        variant="outline"
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Show Script
+                      </Button>
+                    )}
 
-                    {scripts[selectedLead.id]?.[scriptType] && (
+                    {scripts[selectedLead.id] && (
                       <div className="bg-white p-4 rounded-lg border">
-                        <div className="prose prose-sm max-w-none">
-                          {scripts[selectedLead.id][scriptType].split('\n').map((line, i) => (
-                            <p key={i} className="mb-2">{line}</p>
+                        <div className="space-y-3 text-sm">
+                          {scripts[selectedLead.id].split('\n\n').map((line, i) => (
+                            <p key={i} className="leading-relaxed">{line}</p>
                           ))}
                         </div>
                       </div>
                     )}
-
-                    {!scripts[selectedLead.id]?.[scriptType] && !generatingScript[selectedLead.id] && (
-                      <Button
-                        onClick={() => generateScript(selectedLead, scriptType)}
-                        className="w-full"
-                        variant="outline"
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Generate {scriptType} Script
-                      </Button>
-                    )}
                   </CardContent>
                 </Card>
 
-                {/* Call Notes */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Call Status</label>
-                    <Select value={callStatus} onValueChange={setCallStatus}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no_answer">No Answer</SelectItem>
-                        <SelectItem value="callback_scheduled">Callback Scheduled</SelectItem>
-                        <SelectItem value="connected">Connected</SelectItem>
-                        <SelectItem value="not_interested">Not Interested</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {callStatus === "callback_scheduled" && (
+                {/* Appointment Booking or Call Notes */}
+                {!bookingAppointment ? (
+                  <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Callback Date</label>
-                      <Input
-                        type="datetime-local"
-                        value={callbackDate}
-                        onChange={(e) => setCallbackDate(e.target.value)}
+                      <label className="block text-sm font-medium mb-2">Call Status</label>
+                      <Select value={callStatus} onValueChange={setCallStatus}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="no_answer">No Answer</SelectItem>
+                          <SelectItem value="callback_scheduled">Callback Scheduled</SelectItem>
+                          <SelectItem value="connected">Connected</SelectItem>
+                          <SelectItem value="not_interested">Not Interested</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {callStatus === "callback_scheduled" && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Callback Date</label>
+                        <Input
+                          type="datetime-local"
+                          value={callbackDate}
+                          onChange={(e) => setCallbackDate(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Call Notes</label>
+                      <Textarea
+                        value={callNotes}
+                        onChange={(e) => setCallNotes(e.target.value)}
+                        placeholder="Enter notes about the call..."
+                        rows={4}
                       />
                     </div>
-                  )}
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Call Notes</label>
-                    <Textarea
-                      value={callNotes}
-                      onChange={(e) => setCallNotes(e.target.value)}
-                      placeholder="Enter notes about the call..."
-                      rows={4}
-                    />
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => setBookingAppointment(true)}
+                        className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600"
+                        size="lg"
+                      >
+                        <Calendar className="w-5 h-5 mr-2" />
+                        Book Appointment
+                      </Button>
+                      <Button
+                        onClick={() => handleCallComplete(selectedLead)}
+                        variant="outline"
+                        size="lg"
+                      >
+                        <CheckCircle2 className="w-5 h-5 mr-2" />
+                        Complete
+                      </Button>
+                    </div>
                   </div>
-
-                  <Button
-                    onClick={() => handleCallComplete(selectedLead)}
-                    className="w-full bg-gradient-to-r from-green-500 to-green-600"
-                    size="lg"
-                  >
-                    <CheckCircle2 className="w-5 h-5 mr-2" />
-                    Complete Call
-                  </Button>
-                </div>
+                ) : (
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardHeader>
+                      <CardTitle>Book Site Evaluation Appointment</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Date</label>
+                        <Input
+                          type="date"
+                          value={appointmentData.date}
+                          onChange={(e) => setAppointmentData({ ...appointmentData, date: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Time</label>
+                        <Input
+                          type="time"
+                          value={appointmentData.time}
+                          onChange={(e) => setAppointmentData({ ...appointmentData, time: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Location</label>
+                        <Input
+                          value={appointmentData.location}
+                          onChange={(e) => setAppointmentData({ ...appointmentData, location: e.target.value })}
+                          placeholder={selectedLead.site_address || "Enter location"}
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={handleBookAppointment}
+                          className="flex-1 bg-gradient-to-r from-green-500 to-green-600"
+                        >
+                          <Calendar className="w-5 h-5 mr-2" />
+                          Confirm Booking
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setBookingAppointment(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
           </DialogContent>
