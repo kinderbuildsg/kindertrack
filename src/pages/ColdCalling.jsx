@@ -456,7 +456,7 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
 
         {/* Call Dialog */}
         <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
+          <DialogContent className="bg-white max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl">
                 Calling: {selectedLead?.contact_person}

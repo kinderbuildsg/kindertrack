@@ -146,7 +146,7 @@ export default function WorkProgress({ project, onUpdate }) {
                   Add Progress
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="bg-white">
                 <DialogHeader>
                   <DialogTitle>Log Work Progress</DialogTitle>
                 </DialogHeader>
