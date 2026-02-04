@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Construction, Plus, Upload, Loader2, X, Calendar, AlertCircle } from "lucide-react";
+import { Construction, Plus, Upload, Loader2, X, Calendar, AlertCircle, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 
 export default function WorkProgress({ project, onUpdate }) {
@@ -98,6 +98,25 @@ export default function WorkProgress({ project, onUpdate }) {
 
   return (
     <div className="space-y-4">
+      <Card className="border-green-200 bg-green-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-700">
+            <Calendar className="w-5 h-5" />
+            Work Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            className="w-full bg-white"
+            onClick={() => window.open('https://timeline.kinderbuildsg.com/', '_blank')}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            View Project Timeline
+          </Button>
+        </CardContent>
+      </Card>
+
       {!project.payment_30_received && (
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
