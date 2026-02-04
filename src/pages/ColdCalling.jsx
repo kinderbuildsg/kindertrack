@@ -283,7 +283,7 @@ Format the script with clear sections: Introduction, Value Proposition, Call to 
                   Add Lead
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="bg-white">
                 <DialogHeader>
                   <DialogTitle>Add New Lead</DialogTitle>
                   <DialogDescription>
