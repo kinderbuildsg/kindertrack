@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Building2, MapPin, User, DollarSign, Calendar } from "lucide-react";
+import { Building2, MapPin, User, DollarSign, Calendar, TrendingUp } from "lucide-react";
 
 const stageColors = {
   site_evaluation: "bg-blue-100 text-blue-800",
@@ -55,6 +56,31 @@ const allStages = [
 
 export default function ProjectCard({ project }) {
   const [activeTab, setActiveTab] = useState(project.stage);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [assignedUserName, setAssignedUserName] = useState("");
+
+  useEffect(() => {
+    loadUserData();
+  }, [project.assigned_to]);
+
+  const loadUserData = async () => {
+    try {
+      const user = await base44.auth.me();
+      setCurrentUser(user);
+
+      if (project.assigned_to) {
+        // Try to fetch the assigned user's name
+        const users = await base44.entities.User.filter({ email: project.assigned_to });
+        if (users.length > 0) {
+          setAssignedUserName(users[0].full_name || project.assigned_to);
+        } else {
+          setAssignedUserName(project.assigned_to.split('@')[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  };
 
   const stageIndex = allStages.findIndex(s => s.key === project.stage);
 
@@ -67,6 +93,21 @@ export default function ProjectCard({ project }) {
     return payments.filter(p => p.received).length;
   };
 
+  const calculateCommission = () => {
+    if (!project.estimated_value) return 0;
+    const totalCommission = project.estimated_value * 0.05;
+    let earned = 0;
+    
+    if (project.payment_40_received) earned += totalCommission * 0.5;
+    if (project.payment_30_final_received) earned += totalCommission * 0.5;
+    
+    return { total: totalCommission, earned, pending: totalCommission - earned };
+  };
+
+  const isSalesperson = currentUser?.job_role === 'sales' || currentUser?.role === 'sales';
+  const isAssignedToCurrentUser = currentUser?.email === project.assigned_to;
+  const commission = calculateCommission();
+
   return (
     <Card className="shadow-lg hover:shadow-xl transition-all duration-200 h-full overflow-hidden">
       <CardContent className="p-0">
@@ -77,24 +118,44 @@ export default function ProjectCard({ project }) {
               <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1">
                 {project.project_title || project.client_name}
               </h3>
-              <Badge className={stageColors[project.stage]}>
-                {stageNames[project.stage]}
-              </Badge>
+              <div className="flex gap-2 flex-wrap">
+                <Badge className={stageColors[project.stage]}>
+                  {stageNames[project.stage]}
+                </Badge>
+                <Badge className={priorityColors[project.priority || "medium"]}>
+                  {project.priority || "medium"}
+                </Badge>
+              </div>
             </div>
-            <Badge className={priorityColors[project.priority || "medium"]}>
-              {project.priority || "medium"}
-            </Badge>
           </div>
 
-          <div className="space-y-1 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-2 text-gray-600">
               <Building2 className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">{project.client_name}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-gray-600">
               <User className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">{project.contact_person}</span>
             </div>
+            
+            {/* Assigned User - Highlighted */}
+            <div className={`flex items-center gap-2 px-2 py-1.5 rounded-md ${isAssignedToCurrentUser ? 'bg-sky-50 border border-sky-200' : 'bg-gray-50'}`}>
+              <User className="w-4 h-4 flex-shrink-0 font-semibold" />
+              <span className={`font-semibold ${isAssignedToCurrentUser ? 'text-sky-700' : 'text-gray-700'}`}>
+                {assignedUserName ? `In charge: ${assignedUserName}` : 'Unassigned'}
+              </span>
+            </div>
+
+            {/* Commission for Salesperson - Show if assigned to current user */}
+            {isSalesperson && isAssignedToCurrentUser && project.stage === 'deal_closed' && (
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-green-50 border border-green-200 mt-2">
+                <TrendingUp className="w-4 h-4 flex-shrink-0 text-green-600" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-green-600">Commission Potential: <span className="font-bold">${commission.earned.toFixed(2)} earned</span> / ${commission.pending.toFixed(2)} pending</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
