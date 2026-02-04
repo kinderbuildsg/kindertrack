@@ -12,7 +12,10 @@ export default function DesignProposal({ project, onUpdate }) {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     polycam_3d_scan_link: project.polycam_3d_scan_link || '',
-    client_requirements: project.client_requirements || ''
+    client_requirements: project.client_requirements || '',
+    proposal_quote_1: project.proposal_quote_1 || '',
+    proposal_quote_2: project.proposal_quote_2 || '',
+    proposal_quote_3: project.proposal_quote_3 || ''
   });
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState(project.design_proposal_images || []);
@@ -50,7 +53,10 @@ export default function DesignProposal({ project, onUpdate }) {
       await base44.entities.Project.update(project.id, {
         polycam_3d_scan_link: formData.polycam_3d_scan_link,
         client_requirements: formData.client_requirements,
-        design_proposal_images: uploadedUrls
+        design_proposal_images: uploadedUrls,
+        proposal_quote_1: formData.proposal_quote_1,
+        proposal_quote_2: formData.proposal_quote_2,
+        proposal_quote_3: formData.proposal_quote_3
       });
 
       onUpdate();
@@ -138,6 +144,37 @@ export default function DesignProposal({ project, onUpdate }) {
             )}
           </div>
 
+          <div className="space-y-3 border-t pt-4">
+            <Label className="text-base font-semibold">Proposal Quotations (Google Drive Links)</Label>
+            <div>
+              <Label>Proposal 1</Label>
+              <Input
+                type="url"
+                value={formData.proposal_quote_1}
+                onChange={(e) => setFormData({ ...formData, proposal_quote_1: e.target.value })}
+                placeholder="Paste Google Drive share link for proposal 1..."
+              />
+            </div>
+            <div>
+              <Label>Proposal 2</Label>
+              <Input
+                type="url"
+                value={formData.proposal_quote_2}
+                onChange={(e) => setFormData({ ...formData, proposal_quote_2: e.target.value })}
+                placeholder="Paste Google Drive share link for proposal 2..."
+              />
+            </div>
+            <div>
+              <Label>Proposal 3</Label>
+              <Input
+                type="url"
+                value={formData.proposal_quote_3}
+                onChange={(e) => setFormData({ ...formData, proposal_quote_3: e.target.value })}
+                placeholder="Paste Google Drive share link for proposal 3..."
+              />
+            </div>
+          </div>
+
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -195,6 +232,47 @@ export default function DesignProposal({ project, onUpdate }) {
               {project.design_proposal_images.map((url, idx) => (
                 <img key={idx} src={url} alt={`Design ${idx + 1}`} className="w-full h-32 object-cover rounded" />
               ))}
+            </div>
+          </div>
+        )}
+
+        {(project.proposal_quote_1 || project.proposal_quote_2 || project.proposal_quote_3) && (
+          <div className="border-t pt-4">
+            <Label className="text-gray-500 text-base font-semibold">Proposal Quotations</Label>
+            <div className="space-y-2 mt-2">
+              {project.proposal_quote_1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => window.open(project.proposal_quote_1, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Proposal 1
+                </Button>
+              )}
+              {project.proposal_quote_2 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => window.open(project.proposal_quote_2, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Proposal 2
+                </Button>
+              )}
+              {project.proposal_quote_3 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => window.open(project.proposal_quote_3, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Proposal 3
+                </Button>
+              )}
             </div>
           </div>
         )}
