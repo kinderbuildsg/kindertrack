@@ -28,22 +28,28 @@ export default function ProjectDetails() {
     if (projectId) {
       loadProjectData();
     }
+    // Load user on mount only
+    base44.auth.me().then(setUser).catch(console.error);
   }, [projectId]);
 
   const loadProjectData = async () => {
     setIsLoading(true);
     try {
-      const [projectData, currentUser, procurementData] = await Promise.all([
+      const [projectData, procurementData] = await Promise.all([
         base44.entities.Project.filter({ id: projectId }),
-        base44.auth.me(),
         base44.entities.ProcurementItem.filter({ project_id: projectId })
       ]);
 
       if (projectData.length > 0) {
         setProject(projectData[0]);
       }
-      setUser(currentUser);
       setProcurementItems(procurementData);
+      
+      // Load user only once on mount
+      if (!user) {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      }
     } catch (error) {
       console.error("Error loading project:", error);
     }
@@ -129,7 +135,7 @@ export default function ProjectDetails() {
           {/* Stage Progress Bar */}
           <div className="flex items-center justify-between mt-6">
             {stages.map((stage, index) => (
-              <React.Fragment key={stage.key}>
+              <div key={stage.key} className="flex items-center flex-1">
                 <div className="flex flex-col items-center">
                   <button
                     onClick={() => handleStageChange(stage.key)}
@@ -153,7 +159,7 @@ export default function ProjectDetails() {
                     index < currentStageIndex ? 'bg-green-500' : 'bg-gray-200'
                   }`} />
                 )}
-              </React.Fragment>
+              </div>
             ))}
           </div>
         </div>
