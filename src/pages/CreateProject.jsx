@@ -25,7 +25,7 @@ export default function CreateProject() {
     contact_email: "",
     contact_phone: "",
     site_address: "",
-    stage: "cold_outreach",
+    stage: "site_evaluation",
     priority: "medium",
     estimated_value: "",
     notes: ""
@@ -35,8 +35,36 @@ export default function CreateProject() {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     loadTemplates();
+    loadLeadData();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const loadLeadData = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const leadId = urlParams.get('from_lead');
+    
+    if (leadId) {
+      try {
+        const leads = await base44.entities.Lead.filter({ id: leadId });
+        if (leads.length > 0) {
+          const lead = leads[0];
+          setFormData(prev => ({
+            ...prev,
+            project_title: lead.project_type || "",
+            client_name: lead.company_name || "",
+            contact_person: lead.contact_person || "",
+            contact_email: lead.contact_email || "",
+            contact_phone: lead.contact_phone || "",
+            site_address: lead.site_address || "",
+            estimated_value: lead.estimated_value || "",
+            notes: lead.notes || ""
+          }));
+        }
+      } catch (error) {
+        console.error("Error loading lead data:", error);
+      }
+    }
+  };
 
   const loadTemplates = async () => {
     const data = await base44.entities.ProjectTemplate.filter({ is_active: true }, "-created_date");
@@ -73,6 +101,17 @@ export default function CreateProject() {
       };
 
       const newProject = await base44.entities.Project.create(projectData);
+
+      // Mark lead as converted if coming from lead
+      const urlParams = new URLSearchParams(window.location.search);
+      const leadId = urlParams.get('from_lead');
+      if (leadId) {
+        await base44.entities.Lead.update(leadId, {
+          status: "won",
+          converted_to_project_id: newProject.id,
+          conversion_date: new Date().toISOString()
+        });
+      }
 
       // Apply template if selected
       if (selectedTemplate) {
@@ -272,11 +311,12 @@ export default function CreateProject() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cold_outreach">Cold Outreach</SelectItem>
-                      <SelectItem value="design">Design</SelectItem> {/* Added Design stage */}
-                      <SelectItem value="closing">Closing</SelectItem>
+                      <SelectItem value="site_evaluation">Site Evaluation</SelectItem>
+                      <SelectItem value="design_proposal">Design Proposal</SelectItem>
+                      <SelectItem value="deal_closed">Deal Closed</SelectItem>
                       <SelectItem value="procurement">Procurement</SelectItem>
-                      <SelectItem value="work">Installation</SelectItem>
+                      <SelectItem value="work_in_progress">Work in Progress</SelectItem>
+                      <SelectItem value="completion">Completion</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
