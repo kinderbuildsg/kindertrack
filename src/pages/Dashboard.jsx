@@ -27,6 +27,7 @@ import DesignerDashboard from "../components/dashboard/DesignerDashboard";
 import EmployeeDashboard from "../components/dashboard/EmployeeDashboard";
 import FinanceDashboard from "../components/dashboard/FinanceDashboard";
 import CommissionWidget from "../components/dashboard/CommissionWidget";
+import AIInsightsDashboard from "../components/dashboard/AIInsightsDashboard";
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -228,6 +229,11 @@ export default function Dashboard() {
 
         {/* Smart Notifications */}
         <SmartNotifications projects={projects} tasks={tasks} user={user} isLoading={isLoading} />
+
+        {/* AI Insights - Admin Only */}
+        {user?.role === 'admin' && (
+          <AIInsightsDashboard user={user} />
+        )}
 
         {/* Follow-Up Reminders */}
         <FollowUpList user={user} />
