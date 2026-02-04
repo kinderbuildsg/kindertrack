@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Project } from "@/entities/Project";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Search, Plus } from "lucide-react";
@@ -12,19 +11,13 @@ import ProjectList from "../components/projects/ProjectList";
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
-  const [filteredProjects, setFilteredProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [stageFilter, setStageFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("site_evaluation");
 
   useEffect(() => {
     loadProjects();
   }, []);
-
-  useEffect(() => {
-    filterProjects();
-  }, [projects, searchTerm, stageFilter, priorityFilter]);
 
   const loadProjects = async () => {
     setIsLoading(true);
@@ -33,28 +26,27 @@ export default function Projects() {
     setIsLoading(false);
   };
 
-  const filterProjects = () => {
-    let filtered = [...projects];
+  const stages = [
+    { key: 'site_evaluation', label: 'Site Evaluation', icon: '📍' },
+    { key: 'design_proposal', label: 'Design', icon: '🎨' },
+    { key: 'deal_closed', label: 'Deal Closed', icon: '✓' },
+    { key: 'procurement', label: 'Procurement', icon: '📦' },
+    { key: 'work_in_progress', label: 'Installation', icon: '🏗️' },
+    { key: 'completion', label: 'Completion', icon: '✅' },
+    { key: 'maintenance', label: 'Maintenance', icon: '🔧' }
+  ];
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.client_name?.toLowerCase().includes(term) ||
-        p.mcst_school_name?.toLowerCase().includes(term) ||
-        p.contact_person?.toLowerCase().includes(term) ||
-        p.site_address?.toLowerCase().includes(term)
-      );
-    }
-
-    if (stageFilter !== "all") {
-      filtered = filtered.filter(p => p.stage === stageFilter);
-    }
-
-    if (priorityFilter !== "all") {
-      filtered = filtered.filter(p => p.priority === priorityFilter);
-    }
-
-    setFilteredProjects(filtered);
+  const getProjectsByStage = (stage) => {
+    return projects.filter(p => 
+      p.stage === stage && (
+        !searchTerm || (
+          p.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.mcst_school_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.site_address?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      )
+    );
   };
 
   return (
@@ -77,58 +69,41 @@ export default function Projects() {
           </Link>
         </div>
 
-        {/* Filters */}
+        {/* Search Bar */}
         <div className="bg-white rounded-xl shadow-md p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search by client, MCST, contact, or address..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <Select value={stageFilter} onValueChange={setStageFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Stages" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Stages</SelectItem>
-                <SelectItem value="cold_outreach">Cold Outreach</SelectItem>
-                <SelectItem value="design">Design</SelectItem>
-                <SelectItem value="closing">Closing</SelectItem>
-                <SelectItem value="procurement">Procurement</SelectItem>
-                <SelectItem value="work">Installation</SelectItem>
-                <SelectItem value="completion">Completion</SelectItem>
-                <SelectItem value="post_maintenance">Maintenance</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Priorities" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search by client, MCST, contact, or address..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </div>
 
-        {/* Project List */}
-        <ProjectList 
-          projects={filteredProjects} 
-          isLoading={isLoading}
-          onUpdate={loadProjects}
-        />
+        {/* Stage Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-7 w-full bg-white shadow-md mb-6">
+            {stages.map(stage => (
+              <TabsTrigger key={stage.key} value={stage.key} className="text-xs md:text-sm">
+                <span className="mr-1">{stage.icon}</span>
+                <span className="hidden sm:inline">{stage.label}</span>
+                <span className="inline sm:hidden">{stage.label.split(' ')[0]}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {stages.map(stage => (
+            <TabsContent key={stage.key} value={stage.key}>
+              <ProjectList 
+                projects={getProjectsByStage(stage.key)}
+                isLoading={isLoading}
+                onUpdate={loadProjects}
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </div>
   );
