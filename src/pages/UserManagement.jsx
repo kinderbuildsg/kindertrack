@@ -367,13 +367,13 @@ Kinderbuild Projects Team`
                   key={user.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-sky-600 rounded-full flex items-center justify-center">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-sky-600 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white font-semibold text-sm">
                         {user.full_name?.charAt(0).toUpperCase() || "?"}
                       </span>
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900">{user.full_name || "No name"}</p>
                       <p className="text-sm text-gray-500">{user.email}</p>
                       {user.must_change_password && (
@@ -383,22 +383,54 @@ Kinderbuild Projects Team`
                       )}
                     </div>
                   </div>
-                  <Badge 
-                    variant={user.role === "admin" ? "default" : "secondary"}
-                    className={user.role === "admin" ? "bg-amber-500" : ""}
-                  >
-                    {user.role === "admin" ? (
-                      <>
-                        <Shield className="w-3 h-3 mr-1" />
-                        Admin
-                      </>
-                    ) : (
-                      <>
-                        <User className="w-3 h-3 mr-1" />
-                        User
-                      </>
-                    )}
-                  </Badge>
+                  {editingUserId === user.id ? (
+                    <div className="flex items-center gap-2 ml-4">
+                      <Select value={editingRole} onValueChange={setEditingRole}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="director">Director</SelectItem>
+                          <SelectItem value="sales">Sales</SelectItem>
+                          <SelectItem value="telemarketer">Telemarketer</SelectItem>
+                          <SelectItem value="cold_caller">Cold Caller</SelectItem>
+                          <SelectItem value="designer">Designer</SelectItem>
+                          <SelectItem value="finance">Finance</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        size="sm"
+                        onClick={() => handleUpdateRole(user.id, editingRole)}
+                        className="bg-green-600 hover:bg-green-700 whitespace-nowrap"
+                      >
+                        Save
+                      </Button>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingUserId(null)}
+                        className="whitespace-nowrap"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                      <Badge className="bg-blue-100 text-blue-800">
+                        {user.job_role ? (user.job_role.charAt(0).toUpperCase() + user.job_role.slice(1).replace('_', ' ')) : 'No role'}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingUserId(user.id);
+                          setEditingRole(user.job_role || "");
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
