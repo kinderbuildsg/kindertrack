@@ -102,10 +102,11 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
       proposal_number: proposalNumber,
       item_name: "",
       supplier_price: "",
-      supplier_currency: "SGD",
+      supplier_currency: "USD",
       selling_price: "",
       notes: "",
-      image_url: ""
+      image_url: "",
+      is_confirmed: false
     });
     setImageFile(null);
     setImagePreview(null);
@@ -192,11 +193,33 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
     const profit = totalSellingPrice - totalSupplierCost;
     const margin = totalSellingPrice > 0 ? profit / totalSellingPrice * 100 : 0;
 
+    const proposalLink = proposalNumber === 1 ? project.proposal_quote_1 : proposalNumber === 2 ? project.proposal_quote_2 : project.proposal_quote_3;
+
     return (
       <div className="space-y-4">
+        {proposalLink && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Proposal {proposalNumber} Design</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(proposalLink, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View Design Document
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {proposalItems.map((item) =>
-          <Card key={item.id} className="flex flex-col">
+          <Card key={item.id} className={`flex flex-col ${item.is_confirmed ? 'border-2 border-green-500 bg-green-50' : ''}`}>
               <CardContent className="pt-4 flex-grow">
                 {item.image_url ?
               <img src={item.image_url} alt={item.item_name} className="w-full h-32 object-cover rounded-md mb-3" /> :
@@ -205,7 +228,10 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                     <Image className="w-8 h-8 text-gray-400" />
                   </div>
               }
-                <h4 className="font-bold">{item.item_name}</h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-bold">{item.item_name}</h4>
+                  {item.is_confirmed && <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">✓ Confirmed</span>}
+                </div>
                 <p className="text-sm text-gray-500">{item.notes}</p>
               </CardContent>
               <CardFooter className="flex-col items-start text-sm pt-4 border-t">
@@ -214,7 +240,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                     <div className="w-full flex justify-between">
                         <span>Supplier:</span>
                         <span className="font-semibold">
-                            {item.supplier_price?.toLocaleString()} {item.supplier_currency}
+                            ${item.supplier_price?.toLocaleString()} {item.supplier_currency}
                         </span>
                     </div>
                     <CurrencyConverter value={item.supplier_price} fromCurrency={item.supplier_currency} />
@@ -223,11 +249,22 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                  <div className="w-full flex justify-between mt-2">
                     <span>Selling:</span>
                     <span className="font-semibold text-green-600">
-                        {item.selling_price?.toLocaleString()} SGD
+                        S${item.selling_price?.toLocaleString()}
                     </span>
                 </div>
                 {canViewSupplierPrices() && (
-                  <div className="flex gap-2 mt-4 self-end">
+                  <div className="flex gap-2 mt-4 w-full">
+                      <Button 
+                        variant={item.is_confirmed ? "secondary" : "default"} 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={async () => {
+                          await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                          onUpdate();
+                        }}
+                      >
+                        {item.is_confirmed ? 'Unconfirm' : 'Confirm'}
+                      </Button>
                       <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => {setIsEditing(item);setOpenDialog(true);}}>
                           <Edit className="w-4 h-4" />
                       </Button>
@@ -355,34 +392,32 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                   <Input id="item_name" value={formData.item_name || ''} onChange={(e) => setFormData((f) => ({ ...f, item_name: e.target.value }))} />
               </div>
               {canViewSupplierPrices() && (
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="supplier_price">Supplier Price</Label>
-                        <Input id="supplier_price" type="number" value={formData.supplier_price || ''} onChange={(e) => setFormData((f) => ({ ...f, supplier_price: e.target.value }))} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="supplier_currency">Currency</Label>
-                         <Select value={formData.supplier_currency || 'SGD'} onValueChange={(v) => setFormData((f) => ({ ...f, supplier_currency: v }))}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="SGD">SGD</SelectItem>
-                                <SelectItem value="CNY">CNY</SelectItem>
-                                <SelectItem value="USD">USD</SelectItem>
-                            </SelectContent>
-                         </Select>
-                    </div>
-                </div>
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="supplier_price">Supplier Price (USD)</Label>
+                          <Input id="supplier_price" type="number" step="0.01" value={formData.supplier_price || ''} onChange={(e) => setFormData((f) => ({ ...f, supplier_price: e.target.value }))} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label>Auto-Convert to SGD</Label>
+                          <div className="h-9 px-3 border rounded-md bg-gray-50 flex items-center">
+                            <CurrencyConverter value={parseFloat(formData.supplier_price) || 0} fromCurrency="USD" />
+                          </div>
+                      </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Supplier prices are entered in USD and auto-converted to SGD for reference</p>
+                </>
               )}
                <div className="space-y-2">
                   <Label htmlFor="selling_price">Selling Price (SGD)</Label>
                   <Input id="selling_price" type="number" value={formData.selling_price || ''} onChange={(e) => setFormData((f) => ({ ...f, selling_price: e.target.value }))} />
               </div>
                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea id="notes" value={formData.notes || ''} onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))} />
+                  <Label htmlFor="notes">Product Description / Notes</Label>
+                  <Textarea id="notes" value={formData.notes || ''} onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))} placeholder="Enter product specifications, details..." />
               </div>
                <div className="space-y-2">
-                  <Label>Image</Label>
+                  <Label>Product Image</Label>
                   <Input id="image" type="file" accept="image/*" onChange={handleFileChange} />
                   {imagePreview &&
               <div className="relative w-32 h-32 mt-2">
@@ -393,6 +428,20 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                       </div>
               }
               </div>
+              {canViewSupplierPrices() && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.is_confirmed || false}
+                      onChange={(e) => setFormData((f) => ({ ...f, is_confirmed: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    Mark as Confirmed Product
+                  </Label>
+                  <p className="text-xs text-gray-500">Check this when this product has been confirmed/approved</p>
+                </div>
+              )}
           </div>
           <DialogFooter>
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
