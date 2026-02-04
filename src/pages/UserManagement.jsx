@@ -21,6 +21,8 @@ export default function UserManagement() {
   const [isInviting, setIsInviting] = useState(false);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [approvedUsers, setApprovedUsers] = useState([]);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editingRole, setEditingRole] = useState("");
 
   useEffect(() => {
     loadData();
@@ -102,6 +104,20 @@ Kinderbuild Projects Team`
     } catch (error) {
       console.error("Error rejecting user:", error);
       toast.error("Failed to reject user");
+    }
+  };
+
+  const handleUpdateRole = async (userId, newJobRole) => {
+    try {
+      await base44.entities.User.update(userId, {
+        job_role: newJobRole
+      });
+      toast.success("User role updated successfully");
+      setEditingUserId(null);
+      await loadData();
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      toast.error("Failed to update user role");
     }
   };
 
@@ -229,17 +245,21 @@ Kinderbuild Projects Team`
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={inviteRole} onValueChange={setInviteRole}>
-                    <SelectTrigger id="role">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                   <Label htmlFor="role">Job Role</Label>
+                   <Select value={inviteRole} onValueChange={setInviteRole}>
+                     <SelectTrigger id="role">
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="director">Director</SelectItem>
+                       <SelectItem value="sales">Sales</SelectItem>
+                       <SelectItem value="telemarketer">Telemarketer</SelectItem>
+                       <SelectItem value="cold_caller">Cold Caller</SelectItem>
+                       <SelectItem value="designer">Designer</SelectItem>
+                       <SelectItem value="finance">Finance</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Temporary Password</Label>
                   <div className="flex gap-2">
