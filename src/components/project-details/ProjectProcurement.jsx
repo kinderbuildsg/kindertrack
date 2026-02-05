@@ -317,32 +317,39 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   };
 
   return (
-    <>
-      {isAdmin() && (
-        <div className="mb-6 flex gap-2">
-          <Button 
-            variant={viewMode === "client" ? "default" : "outline"}
-            onClick={() => setViewMode("client")}
-          >
-            Client View
-          </Button>
-          <Button 
-            variant={viewMode === "admin" ? "default" : "outline"}
-            onClick={() => setViewMode("admin")}
-          >
-            Admin Management
-          </Button>
-        </div>
-      )}
+    <div className="space-y-6">
+      {/* Accepted Proposal Section */}
+      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        <CardHeader>
+          <CardTitle className="text-green-800">Accepted Proposal</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {project.deal_closed_date ? (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                Deal closed on <span className="font-semibold">{new Date(project.deal_closed_date).toLocaleDateString()}</span>
+              </p>
+              <p className="text-lg font-bold text-green-700">
+                Project Value: S$ {project.estimated_value?.toLocaleString() || 'TBD'}
+              </p>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No accepted proposal yet</p>
+          )}
+        </CardContent>
+      </Card>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full mb-6">
+      {/* Invoice Tracker */}
+      <SupplierInvoiceTracker project={project} onUpdate={onUpdate} />
+
+      {/* Supplier Type Tabs */}
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="items">Items & Quotations</TabsTrigger>
-          <TabsTrigger value="supplier">Supplier Quoting</TabsTrigger>
+          <TabsTrigger value="playground">Playground Supplier</TabsTrigger>
+          <TabsTrigger value="epdm">EPDM Supplier</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="items" className="space-y-6">
-      <SupplierInvoiceTracker project={project} onUpdate={onUpdate} />
+        <TabsContent value="playground" className="space-y-6">
       
       {viewMode === "admin" && isAdmin() ? (
         <Card className="mb-6 shadow-lg border-2 border-red-200 bg-red-50">
