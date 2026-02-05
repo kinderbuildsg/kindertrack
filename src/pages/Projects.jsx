@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Project } from "@/entities/Project";
+import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Search, Plus } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 import ProjectList from "../components/projects/ProjectList";
+
+const ITEMS_PER_PAGE = 12;
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     loadProjects();
@@ -20,11 +32,12 @@ export default function Projects() {
 
   useEffect(() => {
     filterProjects();
+    setCurrentPage(1);
   }, [projects, searchTerm]);
 
   const loadProjects = async () => {
     setIsLoading(true);
-    const data = await Project.list("-updated_date");
+    const data = await base44.entities.Project.list("-updated_date", 500);
     setProjects(data);
     setIsLoading(false);
   };
@@ -44,6 +57,10 @@ export default function Projects() {
 
     setFilteredProjects(filtered);
   };
+
+  const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
+  const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProjects = filteredProjects.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
