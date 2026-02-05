@@ -47,6 +47,7 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Calendar from './pages/Calendar';
 import ChangePassword from './pages/ChangePassword';
 import ColdCalling from './pages/ColdCalling';
 import CompletionPage from './pages/CompletionPage';
@@ -66,11 +67,11 @@ import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
 import WorkProgressPage from './pages/WorkProgressPage';
-import Calendar from './pages/Calendar';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Calendar": Calendar,
     "ChangePassword": ChangePassword,
     "ColdCalling": ColdCalling,
     "CompletionPage": CompletionPage,
@@ -90,7 +91,6 @@ export const PAGES = {
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
     "WorkProgressPage": WorkProgressPage,
-    "Calendar": Calendar,
 }
 
 export const pagesConfig = {

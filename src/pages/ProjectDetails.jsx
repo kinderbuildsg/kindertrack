@@ -16,6 +16,8 @@ import Completion from "../components/project-workflow/Completion";
 import ProjectGantt from "../components/project-details/ProjectGantt";
 import ProjectQC from "../components/project-details/ProjectQC";
 import ProjectFinancials from "../components/project-details/ProjectFinancials";
+import ProjectEdit from "../components/project-details/ProjectEdit";
+import { Edit } from "lucide-react";
 
 export default function ProjectDetails() {
   const navigate = useNavigate();
@@ -27,6 +29,7 @@ export default function ProjectDetails() {
   const [procurementItems, setProcurementItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (projectId) {
@@ -75,6 +78,27 @@ export default function ProjectDetails() {
     }
   };
 
+  const handleEditSave = async (formData) => {
+    try {
+      await base44.entities.Project.update(project.id, formData);
+      setIsEditing(false);
+      loadProjectData();
+    } catch (error) {
+      console.error("Error updating project:", error);
+      alert("Failed to save project details");
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    try {
+      await base44.entities.Project.delete(project.id);
+      navigate(createPageUrl("Dashboard"));
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      alert("Failed to delete project");
+    }
+  };
+
   const stages = [
     { key: 'site_evaluation', label: 'Site Evaluation', color: 'bg-blue-500' },
     { key: 'design_proposal', label: 'Design Proposal', color: 'bg-purple-500' },
@@ -110,6 +134,17 @@ export default function ProjectDetails() {
     );
   }
 
+  if (isEditing) {
+    return (
+      <ProjectEdit 
+        project={project} 
+        onSave={handleEditSave}
+        onCancel={() => setIsEditing(false)}
+        onDelete={handleDeleteProject}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -120,6 +155,15 @@ export default function ProjectDetails() {
             onClick={() => navigate(createPageUrl("Dashboard"))}
           >
             <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditing(true)}
+            className="gap-2"
+          >
+            <Edit className="w-4 h-4" />
+            Edit Project
           </Button>
         </div>
 
