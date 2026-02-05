@@ -31,6 +31,24 @@ export default function LeadManagement() {
 
   useEffect(() => {
     loadData();
+
+    // Subscribe to real-time lead updates
+    const unsubscribeLead = base44.entities.Lead.subscribe((event) => {
+      setLeads(prev => {
+        if (event.type === 'create') {
+          return [event.data, ...prev];
+        } else if (event.type === 'update') {
+          return prev.map(l => l.id === event.id ? event.data : l);
+        } else if (event.type === 'delete') {
+          return prev.filter(l => l.id !== event.id);
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      unsubscribeLead();
+    };
   }, []);
 
   const loadData = async () => {
