@@ -179,8 +179,8 @@ export default function DealClosed({ project, onUpdate }) {
             {paymentTerms.map((term, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{term.percentage}%</p>
-                  <p className="text-sm text-gray-500">{term.label.split(' - ')[1]}</p>
+                  <p className="font-medium text-gray-900">{term.label}</p>
+                  <p className="text-sm text-gray-500">{term.percentage}% of total</p>
                 </div>
                 <Input
                   type="number"
@@ -192,18 +192,11 @@ export default function DealClosed({ project, onUpdate }) {
                     updated[idx].percentage = parseInt(e.target.value) || 0;
                     setPaymentTerms(updated);
                   }}
-                  className="w-20 text-center"
+                  className="w-24 text-center"
                 />
+                <span className="text-sm font-medium text-gray-700 ml-3">%</span>
               </div>
             ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPaymentTerms(DEFAULT_PAYMENT_TERMS)}
-              className="w-full"
-            >
-              Reset to Default (40%, 30%, 30%)
-            </Button>
           </div>
 
           <div className="flex gap-2">
