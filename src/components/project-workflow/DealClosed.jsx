@@ -335,62 +335,84 @@ export default function DealClosed({ project, onUpdate }) {
           <div className="space-y-3">
             {terms.map((term, idx) => {
               const amount = project.estimated_value ? (project.estimated_value * term.percentage / 100).toFixed(2) : '0.00';
-              const isReceived = term.received;
+              const paymentStatus = getPaymentStatus(term, project.deal_closed_date);
+              const closedDate = new Date(project.deal_closed_date);
+              const dueDate = new Date(closedDate.getTime() + 14 * 24 * 60 * 60 * 1000);
               
               return (
                 <div
                   key={idx}
-                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                    isReceived
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    term.received
                       ? 'bg-green-50 border-green-300'
-                      : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                      : paymentStatus.status === 'overdue'
+                      ? 'bg-red-50 border-red-300'
+                      : paymentStatus.status === 'pending' && new Date() > new Date(closedDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+                      ? 'bg-orange-50 border-orange-300'
+                      : 'bg-gray-50 border-gray-200'
                   }`}
-                  onClick={() => togglePaymentReceived(idx)}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          isReceived 
+                          term.received 
                             ? 'bg-green-600 border-green-600' 
+                            : paymentStatus.status === 'overdue'
+                            ? 'bg-red-600 border-red-600'
                             : 'border-gray-300'
                         }`}>
-                          {isReceived && <Check className="w-4 h-4 text-white" />}
+                          {term.received && <Check className="w-4 h-4 text-white" />}
+                          {!term.received && paymentStatus.status === 'overdue' && <AlertCircle className="w-4 h-4 text-red-600" />}
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">{term.label}</p>
                           <p className="text-sm text-gray-500">{term.percentage}% of total value</p>
                         </div>
                       </div>
-                      {isReceived && term.received_date && (
-                        <p className="text-xs text-green-600 font-medium mt-2 ml-9">
-                          ✓ Received {new Date(term.received_date).toLocaleDateString('en-SG')}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2 mt-2 ml-9">
+                        <span className={`text-xs font-medium ${paymentStatus.color}`}>
+                          {paymentStatus.label}
+                        </span>
+                        {!term.received && paymentStatus.status !== 'pending' && (
+                          <span className="text-xs text-gray-500">
+                            • Due by {dueDate.toLocaleDateString('en-SG')}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-gray-900">
                         S$ {parseFloat(amount).toLocaleString()}
                       </p>
-                      <Button
-                        size="sm"
-                        variant={isReceived ? "default" : "outline"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePaymentReceived(idx);
-                        }}
-                        className={isReceived ? "bg-green-600 hover:bg-green-700 mt-2" : "mt-2"}
-                      >
-                        {isReceived ? (
-                          <>
-                            <Check className="w-3 h-3 mr-1" />
-                            Received
-                          </>
-                        ) : (
-                          'Mark as Received'
-                        )}
-                      </Button>
                     </div>
+                  </div>
+
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <Label className="text-xs text-gray-600">Payment Date</Label>
+                      <Input
+                        type="date"
+                        value={term.received_date || ''}
+                        onChange={(e) => updatePaymentDate(idx, e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={term.received ? "default" : "outline"}
+                      onClick={() => togglePaymentReceived(idx, !term.received)}
+                      className={term.received ? "bg-green-600 hover:bg-green-700" : ""}
+                    >
+                      {term.received ? (
+                        <>
+                          <Check className="w-3 h-3 mr-1" />
+                          Confirm
+                        </>
+                      ) : (
+                        'Mark'
+                      )}
+                    </Button>
                   </div>
                 </div>
               );
