@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Task } from "@/entities/Task";
 import { ProjectUpdate } from "@/entities/ProjectUpdate"; // Added import for ProjectUpdate
@@ -10,6 +9,8 @@ import { Plus, CheckCircle, Circle, User as UserIcon } from "lucide-react"; // A
 import { format } from "date-fns";
 import { User } from "@/entities/User"; // Added User import
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select imports
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TaskKanban from "./TaskKanban";
 
 const stageTaskTemplates = {
   cold_outreach: [
