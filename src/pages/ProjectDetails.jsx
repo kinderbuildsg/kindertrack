@@ -37,15 +37,17 @@ export default function ProjectDetails() {
   const loadProjectData = async () => {
     setIsLoading(true);
     try {
-      const [projectData, procurementData] = await Promise.all([
+      const [projectData, procurementData, tasksData] = await Promise.all([
         base44.entities.Project.filter({ id: projectId }),
-        base44.entities.ProcurementItem.filter({ project_id: projectId })
+        base44.entities.ProcurementItem.filter({ project_id: projectId }),
+        base44.entities.Task.filter({ project_id: projectId })
       ]);
 
       if (projectData.length > 0) {
         setProject(projectData[0]);
       }
       setProcurementItems(procurementData);
+      setTasks(tasksData);
       
       // Load user only once on mount
       if (!user) {
