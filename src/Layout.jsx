@@ -67,6 +67,12 @@ const getNavigationItems = (user) => {
       roles: ['admin', 'director']
     },
     {
+      title: "Payroll",
+      url: createPageUrl("ManpowerPayroll"),
+      icon: Users,
+      roles: ['admin', 'director']
+    },
+    {
       title: "Users",
       url: createPageUrl("UserManagement"),
       icon: Users,
