@@ -4,12 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Upload, Loader2, FileText, ExternalLink } from "lucide-react";
+import { CheckCircle2, Upload, Loader2, FileText, ExternalLink, Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const DEFAULT_PAYMENT_TERMS = [
+  { percentage: 40, label: "40% - Deposit" },
+  { percentage: 30, label: "30% - Progress" },
+  { percentage: 30, label: "30% - Final" }
+];
 
 export default function DealClosed({ project, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isPaymentEditing, setIsPaymentEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [signedProposalFile, setSignedProposalFile] = useState(null);
+  const [paymentTerms, setPaymentTerms] = useState(project.payment_terms || DEFAULT_PAYMENT_TERMS);
   const [formData, setFormData] = useState({
     deal_closed_date: project.deal_closed_date || new Date().toISOString().split('T')[0],
     estimated_value: project.estimated_value || ''
