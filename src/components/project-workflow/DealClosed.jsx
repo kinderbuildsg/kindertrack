@@ -44,7 +44,8 @@ export default function DealClosed({ project, onUpdate }) {
       await base44.entities.Project.update(project.id, {
         signed_proposal_url: signedProposalUrl,
         deal_closed_date: formData.deal_closed_date,
-        estimated_value: parseFloat(formData.estimated_value) || 0
+        estimated_value: parseFloat(formData.estimated_value) || 0,
+        payment_terms: paymentTerms
       });
 
       onUpdate();
@@ -55,6 +56,22 @@ export default function DealClosed({ project, onUpdate }) {
       alert('Failed to save');
     }
     setIsSaving(false);
+  };
+
+  const togglePaymentReceived = async (index) => {
+    const updated = [...paymentTerms];
+    updated[index].received = !updated[index].received;
+    updated[index].received_date = updated[index].received ? new Date().toISOString().split('T')[0] : null;
+    setPaymentTerms(updated);
+
+    try {
+      await base44.entities.Project.update(project.id, {
+        payment_terms: updated
+      });
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating payment:', error);
+    }
   };
 
   if (!isEditing && !project.signed_proposal_url) {
