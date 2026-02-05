@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ProcurementItem } from "@/entities/ProcurementItem";
-import { Project } from "@/entities/Project";
-import { UploadFile } from "@/integrations/Core";
-import { InvokeLLM } from "@/integrations/Core";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Plus, Trash2, Edit, Loader2, Image, RefreshCw, X, Link as LinkIcon, Save, ExternalLink } from "lucide-react";
+import SupplierQuotingForm from "./SupplierQuotingForm";
 
 // Currency Converter Component
 const CurrencyConverter = ({ value, fromCurrency }) => {
