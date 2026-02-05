@@ -37,7 +37,7 @@ export default function LeadManagement() {
     setIsLoading(true);
     try {
       const [leadsData, currentUser] = await Promise.all([
-        base44.entities.Lead.list("-created_date"),
+        base44.entities.Lead.list("-created_date", 200),
         base44.auth.me()
       ]);
       setLeads(leadsData);
