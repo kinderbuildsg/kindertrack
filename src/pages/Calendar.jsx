@@ -99,10 +99,23 @@ export default function Calendar() {
     try {
       if (itemType === "project") {
         const project = projects.find(p => p.id === itemId);
-        await base44.entities.Project.update(itemId, {
+        const updatedProject = {
           ...project,
           work_start_date: newDate
-        });
+        };
+        await base44.entities.Project.update(itemId, updatedProject);
+
+        // Sync to Google Calendar if site evaluation date exists
+        if (project.site_evaluation_date) {
+          await base44.functions.invoke('syncGoogleCalendar', {
+            projectId: itemId,
+            title: `Site Evaluation: ${project.project_title || project.client_name}`,
+            startDate: project.site_evaluation_date,
+            endDate: project.site_evaluation_date,
+            description: `Client: ${project.client_name}`,
+            eventId: project.calendar_event_id
+          });
+        }
       } else if (itemType === "task") {
         const task = tasks.find(t => t.id === itemId);
         await base44.entities.Task.update(itemId, {
