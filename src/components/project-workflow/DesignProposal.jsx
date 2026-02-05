@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Palette, Upload, Loader2, X, ExternalLink, Link as LinkIcon } from "lucide-react";
+import { Palette, Upload, Loader2, X, ExternalLink, Link as LinkIcon, File } from "lucide-react";
 
 export default function DesignProposal({ project, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -288,6 +288,21 @@ export default function DesignProposal({ project, onUpdate }) {
           </div>
         )}
 
+        {project.google_drive_link && (
+          <div>
+            <Label className="text-gray-500">Google Drive Link</Label>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-2"
+              onClick={() => window.open(project.google_drive_link, '_blank')}
+            >
+              <LinkIcon className="w-4 h-4 mr-2" />
+              Open Google Drive Folder
+            </Button>
+          </div>
+        )}
+
         {(project.proposal_quote_1 || project.proposal_quote_2 || project.proposal_quote_3) && (
           <div className="border-t pt-4">
             <Label className="text-gray-500 text-base font-semibold">Proposal Quotations</Label>
@@ -299,7 +314,7 @@ export default function DesignProposal({ project, onUpdate }) {
                   className="w-full"
                   onClick={() => window.open(project.proposal_quote_1, '_blank')}
                 >
-                  <ExternalLink className="w-4 h-4 mr-2" />
+                  <File className="w-4 h-4 mr-2" />
                   View Proposal 1
                 </Button>
               )}
@@ -310,7 +325,7 @@ export default function DesignProposal({ project, onUpdate }) {
                   className="w-full"
                   onClick={() => window.open(project.proposal_quote_2, '_blank')}
                 >
-                  <ExternalLink className="w-4 h-4 mr-2" />
+                  <File className="w-4 h-4 mr-2" />
                   View Proposal 2
                 </Button>
               )}
@@ -321,7 +336,7 @@ export default function DesignProposal({ project, onUpdate }) {
                   className="w-full"
                   onClick={() => window.open(project.proposal_quote_3, '_blank')}
                 >
-                  <ExternalLink className="w-4 h-4 mr-2" />
+                  <File className="w-4 h-4 mr-2" />
                   View Proposal 3
                 </Button>
               )}
