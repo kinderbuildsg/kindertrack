@@ -579,5 +579,4 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
           </Tabs>
           </>
           );
-
           }
