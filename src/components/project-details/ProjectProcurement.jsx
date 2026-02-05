@@ -386,15 +386,15 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                       </div>
                       <div className="flex items-center gap-2">
                         <Button 
-                          size="sm"
-                          variant={item.is_confirmed ? "secondary" : "default"}
-                          onClick={async () => {
-                            await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
-                            onUpdate();
-                          }}
-                        >
-                          {item.is_confirmed ? '✓ Confirmed' : 'Confirm'}
-                        </Button>
+                           size="sm"
+                           variant={item.is_confirmed ? "secondary" : "default"}
+                           onClick={async () => {
+                             await base44.entities.ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                             onUpdate();
+                           }}
+                         >
+                           {item.is_confirmed ? '✓ Confirmed' : 'Confirm'}
+                         </Button>
                         <Button 
                           size="sm" 
                           variant="ghost"
