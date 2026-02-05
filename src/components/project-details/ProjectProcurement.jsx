@@ -119,7 +119,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   const handleSaveLinks = async () => {
     setIsSavingLinks(true);
     try {
-        await Project.update(project.id, {
+        await base44.entities.Project.update(project.id, {
             proposal_1_link: proposalLinks[1],
             proposal_2_link: proposalLinks[2],
             proposal_3_link: proposalLinks[3],
