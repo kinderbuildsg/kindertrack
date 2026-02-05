@@ -474,12 +474,10 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                 <TabsTrigger value="proposal3">Proposal 3</TabsTrigger>
               </TabsList>
               {canViewSupplierPrices() && (
-                <DialogTrigger asChild>
-                    <Button onClick={() => resetForm(parseInt(activeTab.replace('proposal', '')))}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Item
-                    </Button>
-                </DialogTrigger>
+                <Button onClick={() => { resetForm(parseInt(activeTab.replace('proposal', ''))); setOpenDialog(true); }}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Item
+                </Button>
               )}
           </div>
           <TabsContent value="proposal1">{renderProposal(1)}</TabsContent>
