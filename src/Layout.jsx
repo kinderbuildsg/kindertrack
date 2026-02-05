@@ -57,6 +57,12 @@ const getNavigationItems = (user) => {
       roles: ['admin', 'director', 'sales', 'designer']
     },
     {
+      title: "Calendar",
+      url: createPageUrl("Calendar"),
+      icon: CalendarIcon,
+      roles: ['admin', 'director', 'sales', 'designer']
+    },
+    {
       title: "Team",
       url: createPageUrl("Team"),
       icon: Users,
