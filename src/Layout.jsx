@@ -128,6 +128,7 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <SidebarProvider>
+      <PerformanceOptimizer />
       <style>{`
         :root {
           /* Primary Palette */
