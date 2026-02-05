@@ -21,6 +21,7 @@ export default function ProjectDetails() {
   const projectId = urlParams.get("id");
 
   const [project, setProject] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [procurementItems, setProcurementItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
