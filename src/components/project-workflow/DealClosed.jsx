@@ -56,6 +56,11 @@ export default function DealClosed({ project, onUpdate }) {
         payment_terms: paymentTerms
       });
 
+      setFormData({
+        deal_closed_date: formData.deal_closed_date,
+        estimated_value: formData.estimated_value,
+        google_drive_link: formData.google_drive_link
+      });
       onUpdate();
       setIsEditing(false);
       setSignedProposalFile(null);

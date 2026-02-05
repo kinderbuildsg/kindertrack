@@ -59,6 +59,13 @@ export default function DesignProposal({ project, onUpdate }) {
         proposal_quote_3: formData.proposal_quote_3
       });
 
+      setFormData({
+        polycam_3d_scan_link: formData.polycam_3d_scan_link,
+        client_requirements: formData.client_requirements,
+        proposal_quote_1: formData.proposal_quote_1,
+        proposal_quote_2: formData.proposal_quote_2,
+        proposal_quote_3: formData.proposal_quote_3
+      });
       onUpdate();
       setIsEditing(false);
       setImageFiles([]);
