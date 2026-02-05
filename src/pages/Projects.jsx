@@ -28,6 +28,24 @@ export default function Projects() {
 
   useEffect(() => {
     loadProjects();
+
+    // Subscribe to real-time project updates
+    const unsubscribeProject = base44.entities.Project.subscribe((event) => {
+      setProjects(prev => {
+        if (event.type === 'create') {
+          return [event.data, ...prev];
+        } else if (event.type === 'update') {
+          return prev.map(p => p.id === event.id ? event.data : p);
+        } else if (event.type === 'delete') {
+          return prev.filter(p => p.id !== event.id);
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      unsubscribeProject();
+    };
   }, []);
 
   useEffect(() => {
