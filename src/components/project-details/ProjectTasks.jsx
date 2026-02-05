@@ -246,33 +246,39 @@ export default function ProjectTasks({ project, tasks, onUpdate }) {
           </div>
         )}
 
-        {isAdding ? (
-          <div className="flex gap-2">
-            <Input
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              placeholder="Task title..."
-              onKeyPress={(e) => e.key === 'Enter' && handleAddCustomTask()}
-              autoFocus
-            />
-            <Button onClick={handleAddCustomTask}>Add</Button>
-            <Button variant="outline" onClick={() => {
-              setIsAdding(false);
-              setNewTaskTitle("");
-            }}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            onClick={() => setIsAdding(true)}
-            variant="outline"
-            className="w-full"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Custom Task
-          </Button>
-        )}
+            {isAdding ? (
+              <div className="flex gap-2">
+                <Input
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  placeholder="Task title..."
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddCustomTask()}
+                  autoFocus
+                />
+                <Button onClick={handleAddCustomTask}>Add</Button>
+                <Button variant="outline" onClick={() => {
+                  setIsAdding(false);
+                  setNewTaskTitle("");
+                }}>
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => setIsAdding(true)}
+                variant="outline"
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Custom Task
+              </Button>
+            )}
+          </TabsContent>
+
+          <TabsContent value="kanban">
+            <TaskKanban projectId={project.id} onTasksChange={onUpdate} />
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
