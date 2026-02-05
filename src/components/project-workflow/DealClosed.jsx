@@ -7,7 +7,12 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle2, Upload, Loader2, FileText, ExternalLink, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const DEFAULT_PAYMENT_TERMS = [
+const PAYMENT_TERMS_2 = [
+  { percentage: 50, label: "50% - Deposit" },
+  { percentage: 50, label: "50% - Final" }
+];
+
+const PAYMENT_TERMS_3 = [
   { percentage: 40, label: "40% - Deposit" },
   { percentage: 30, label: "30% - Progress" },
   { percentage: 30, label: "30% - Final" }
