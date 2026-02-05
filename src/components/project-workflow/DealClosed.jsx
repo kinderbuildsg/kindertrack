@@ -23,10 +23,12 @@ export default function DealClosed({ project, onUpdate }) {
   const [isPaymentEditing, setIsPaymentEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [signedProposalFile, setSignedProposalFile] = useState(null);
-  const [paymentTerms, setPaymentTerms] = useState(project.payment_terms || DEFAULT_PAYMENT_TERMS);
+  const [paymentTerms, setPaymentTerms] = useState(project.payment_terms || PAYMENT_TERMS_3);
+  const [numPaymentTerms, setNumPaymentTerms] = useState(project.payment_terms?.length || 3);
   const [formData, setFormData] = useState({
     deal_closed_date: project.deal_closed_date || new Date().toISOString().split('T')[0],
-    estimated_value: project.estimated_value || ''
+    estimated_value: project.estimated_value || '',
+    google_drive_link: project.google_drive_link || ''
   });
 
   const handleFileSelect = (e) => {
