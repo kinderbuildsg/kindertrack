@@ -182,7 +182,7 @@ export default function SiteEvaluation({ project, onUpdate }) {
               <div className="grid grid-cols-3 gap-2 mt-2">
                 {imagePreviews.map((preview, idx) => (
                   <div key={idx} className="relative">
-                    <img src={preview} alt={`Preview ${idx + 1}`} className="w-full h-24 object-cover rounded" />
+                    <OptimizedImage src={preview} alt={`Preview ${idx + 1}`} className="w-full h-24 object-cover rounded" />
                     <Button
                       variant="destructive"
                       size="icon"
