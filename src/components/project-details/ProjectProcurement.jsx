@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { ProcurementItem } from "@/entities/ProcurementItem";
+import { Project } from "@/entities/Project";
+import { UploadFile } from "@/integrations/Core";
+import { InvokeLLM } from "@/integrations/Core";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Plus, Trash2, Edit, Loader2, Image, RefreshCw, X, Link as LinkIcon, Save, ExternalLink } from "lucide-react";
-import SupplierQuotingForm from "../procurement/SupplierQuotingForm";
-import SupplierInvoiceTracker from "../procurement/SupplierInvoiceTracker";
 
 // Currency Converter Component
 const CurrencyConverter = ({ value, fromCurrency }) => {
@@ -64,7 +65,6 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   const [isSavingLinks, setIsSavingLinks] = useState(false);
   const [user, setUser] = useState(null);
   const [viewMode, setViewMode] = useState("client");
-  const [selectedTab, setSelectedTab] = useState("items");
 
   useEffect(() => {
     loadUser();
@@ -72,7 +72,8 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   const loadUser = async () => {
     try {
-      const currentUser = await base44.auth.me();
+      const { auth } = await import("@/api/base44Client");
+      const currentUser = await auth.me();
       setUser(currentUser);
     } catch (error) {
       console.error("Error loading user:", error);
@@ -120,7 +121,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   const handleSaveLinks = async () => {
     setIsSavingLinks(true);
     try {
-        await base44.entities.Project.update(project.id, {
+        await Project.update(project.id, {
             proposal_1_link: proposalLinks[1],
             proposal_2_link: proposalLinks[2],
             proposal_3_link: proposalLinks[3],
@@ -152,14 +153,14 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
     try {
       if (imageFile) {
-        const upload = await base44.integrations.Core.UploadFile({ file: imageFile });
-        updatedFormData.image_url = upload.file_url;
+        const { file_url } = await UploadFile({ file: imageFile });
+        updatedFormData.image_url = file_url;
       }
 
       if (isEditing) {
-        await base44.entities.ProcurementItem.update(isEditing.id, updatedFormData);
+        await ProcurementItem.update(isEditing.id, updatedFormData);
       } else {
-        await base44.entities.ProcurementItem.create(updatedFormData);
+        await ProcurementItem.create(updatedFormData);
       }
 
       onUpdate();
@@ -173,7 +174,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   const handleDelete = async (itemId) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
-      await base44.entities.ProcurementItem.delete(itemId);
+      await ProcurementItem.delete(itemId);
       onUpdate();
     }
   };
@@ -259,7 +260,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                         size="sm" 
                         className="flex-1"
                         onClick={async () => {
-                          await base44.entities.ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                          await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
                           onUpdate();
                         }}
                       >
@@ -317,41 +318,25 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Accepted Proposal Section */}
-      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-        <CardHeader>
-          <CardTitle className="text-green-800">Accepted Proposal</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {project.deal_closed_date ? (
-            <div className="space-y-3">
-              <p className="text-sm text-gray-600">
-                Deal closed on <span className="font-semibold">{new Date(project.deal_closed_date).toLocaleDateString()}</span>
-              </p>
-              <p className="text-lg font-bold text-green-700">
-                Project Value: S$ {project.estimated_value?.toLocaleString() || 'TBD'}
-              </p>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No accepted proposal yet</p>
-          )}
-        </CardContent>
-      </Card>
+    <>
+      {isAdmin() && (
+        <div className="mb-6 flex gap-2">
+          <Button 
+            variant={viewMode === "client" ? "default" : "outline"}
+            onClick={() => setViewMode("client")}
+          >
+            Client View
+          </Button>
+          <Button 
+            variant={viewMode === "admin" ? "default" : "outline"}
+            onClick={() => setViewMode("admin")}
+          >
+            Admin Management
+          </Button>
+        </div>
+      )}
 
-      {/* Invoice Tracker */}
-      <SupplierInvoiceTracker project={project} onUpdate={onUpdate} />
-
-      {/* Supplier Type Tabs */}
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="playground">Playground Supplier</TabsTrigger>
-          <TabsTrigger value="epdm">EPDM Supplier</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="playground" className="space-y-6">
-          {/* Admin View */}
-          {viewMode === "admin" && isAdmin() ? (
+      {viewMode === "admin" && isAdmin() ? (
         <Card className="mb-6 shadow-lg border-2 border-red-200 bg-red-50">
           <CardHeader className="bg-red-100">
             <CardTitle className="flex items-center gap-2 text-red-800">
@@ -403,15 +388,15 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                       </div>
                       <div className="flex items-center gap-2">
                         <Button 
-                           size="sm"
-                           variant={item.is_confirmed ? "secondary" : "default"}
-                           onClick={async () => {
-                             await base44.entities.ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
-                             onUpdate();
-                           }}
-                         >
-                           {item.is_confirmed ? '✓ Confirmed' : 'Confirm'}
-                         </Button>
+                          size="sm"
+                          variant={item.is_confirmed ? "secondary" : "default"}
+                          onClick={async () => {
+                            await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                            onUpdate();
+                          }}
+                        >
+                          {item.is_confirmed ? '✓ Confirmed' : 'Confirm'}
+                        </Button>
                         <Button 
                           size="sm" 
                           variant="ghost"
@@ -438,133 +423,102 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
             </div>
           </CardContent>
         </Card>
-          ) : null}
-          
-          {/* Client View */}
-          {viewMode === "client" && (
+      ) : (
+        <Card className="mb-6 shadow-lg">
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="w-5 h-5 text-sky-500" />
+                  Proposal Links
+              </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              {[1, 2, 3].map(num => (
+                  <div key={num} className="flex items-center gap-2">
+                      <Label htmlFor={`proposal-link-${num}`} className="w-24 shrink-0">Proposal {num}</Label>
+                      <Input
+                          id={`proposal-link-${num}`}
+                          placeholder="Paste Google Drive link here..."
+                          value={proposalLinks[num] || ''}
+                          onChange={(e) => handleLinkChange(num, e.target.value)}
+                      />
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={!proposalLinks[num]}
+                          onClick={() => window.open(proposalLinks[num], '_blank')}
+                      >
+                          <ExternalLink className="w-4 h-4" />
+                      </Button>
+                  </div>
+              ))}
+          </CardContent>
+          <CardFooter>
+              <Button onClick={handleSaveLinks} disabled={isSavingLinks}>
+                  {isSavingLinks ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  Save Links
+              </Button>
+          </CardFooter>
+        </Card>
+      )}
+      {viewMode === "client" && (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex justify-between items-center mb-4">
+              <TabsList>
+                <TabsTrigger value="proposal1">Proposal 1 - Playground</TabsTrigger>
+                <TabsTrigger value="proposal2">Proposal 2 - EPDM</TabsTrigger>
+                <TabsTrigger value="proposal3">Proposal 3</TabsTrigger>
+              </TabsList>
+              {canViewSupplierPrices() && (
+                <DialogTrigger asChild>
+                    <Button onClick={() => resetForm(parseInt(activeTab.replace('proposal', '')))}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Item
+                    </Button>
+                </DialogTrigger>
+              )}
+          </div>
+          <TabsContent value="proposal1">{renderProposal(1)}</TabsContent>
+          <TabsContent value="proposal2">
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold">Playground Items</h3>
-                {canViewSupplierPrices() && (
-                  <Button onClick={() => { resetForm(1); setOpenDialog(true); }} size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Item
+              <Card className="bg-amber-50 border-amber-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>EPDM Calculator</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-gray-600">Use our interactive EPDM calculator to estimate surfacing needs and costs.</p>
+                  <Button onClick={() => window.open('https://ui-nexus-vault.lovable.app/', '_blank')} variant="outline" className="w-full">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Open EPDM Calculator
                   </Button>
-                )}
-              </div>
-              {renderProposal(1)}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="epdm" className="space-y-6">
-          {/* Admin View */}
-          {viewMode === "admin" && isAdmin() ? (
-            <Card className="mb-6 shadow-lg border-2 border-red-200 bg-red-50">
-              <CardHeader className="bg-red-100">
-                <CardTitle className="flex items-center gap-2 text-red-800">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  Admin-Only Procurement Management
-                </CardTitle>
-                <p className="text-sm text-red-700">Manage supplier prices, product details, and inventory</p>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">All Products</h3>
-                  <Button onClick={() => { resetForm(2); setOpenDialog(true); }}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Product
+                  <Button onClick={() => {
+                    const proposal2Items = items.filter(i => i.proposal_number === 2);
+                    const data = {
+                      projectId: project.id,
+                      projectTitle: project.project_title,
+                      items: proposal2Items.map(i => ({
+                        name: i.item_name,
+                        supplierPrice: i.supplier_price,
+                        currency: i.supplier_currency,
+                        quantity: 1,
+                        notes: i.notes
+                      }))
+                    };
+                    const encodedData = btoa(JSON.stringify(data));
+                    window.open(`mailto:supplier@epdm.com?subject=EPDM Quote Request for ${project.project_title}&body=Please provide a quote for the following items:%0A%0A${JSON.stringify(data, null, 2)}`, '_blank');
+                  }} variant="default" className="w-full">
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Export & Request Quote
                   </Button>
-                </div>
-                <div className="space-y-3">
-                  {items.filter(i => i.proposal_number === 2).map((item) => (
-                    <Card key={item.id} className={`${item.is_confirmed ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-gray-300'}`}>
-                      <CardContent className="pt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                          <div className="flex items-center gap-3">
-                            {item.image_url ? (
-                              <img src={item.image_url} alt={item.item_name} className="w-16 h-16 object-cover rounded" />
-                            ) : (
-                              <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                <Image className="w-6 h-6 text-gray-400" />
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-semibold">{item.item_name}</p>
-                              <p className="text-xs text-gray-500">EPDM Item</p>
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-gray-500">Supplier Price</Label>
-                            <p className="font-semibold text-blue-600">${item.supplier_price?.toLocaleString()} {item.supplier_currency}</p>
-                            <CurrencyConverter value={item.supplier_price} fromCurrency={item.supplier_currency} />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-gray-500">Selling Price</Label>
-                            <p className="font-semibold text-green-600">S${item.selling_price?.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-gray-500">Notes</Label>
-                            <p className="text-sm text-gray-700">{item.notes || 'No notes'}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button 
-                               size="sm"
-                               variant={item.is_confirmed ? "secondary" : "default"}
-                               onClick={async () => {
-                                 await base44.entities.ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
-                                 onUpdate();
-                               }}
-                             >
-                               {item.is_confirmed ? '✓ Confirmed' : 'Confirm'}
-                             </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => { setIsEditing(item); setOpenDialog(true); }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              className="text-red-500"
-                              onClick={() => handleDelete(item.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {items.filter(i => i.proposal_number === 2).length === 0 && (
-                    <p className="text-center py-8 text-gray-500">No EPDM products added yet</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-          
-          {/* Client View */}
-          {viewMode === "client" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold">EPDM Items</h3>
-                {canViewSupplierPrices() && (
-                  <Button onClick={() => { resetForm(2); setOpenDialog(true); }} size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Item
-                  </Button>
-                )}
-              </div>
+                </CardContent>
+              </Card>
               {renderProposal(2)}
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+          <TabsContent value="proposal3">{renderProposal(3)}</TabsContent>
+        </Tabs>
+      )}
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
 
@@ -647,8 +601,9 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
               Save
             </Button>
           </DialogFooter>
-          </DialogContent>
-          </Dialog>
-          </div>
-          );
-          }
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+
+}
