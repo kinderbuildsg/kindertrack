@@ -66,6 +66,7 @@ import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
 import WorkProgressPage from './pages/WorkProgressPage';
+import Calendar from './pages/Calendar';
 import __Layout from './Layout.jsx';
 
 
@@ -89,6 +90,7 @@ export const PAGES = {
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
     "WorkProgressPage": WorkProgressPage,
+    "Calendar": Calendar,
 }
 
 export const pagesConfig = {
