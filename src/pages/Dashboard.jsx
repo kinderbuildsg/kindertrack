@@ -41,6 +41,39 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
+    
+    // Subscribe to real-time project updates
+    const unsubscribeProject = base44.entities.Project.subscribe((event) => {
+      setProjects(prev => {
+        if (event.type === 'create') {
+          return [event.data, ...prev];
+        } else if (event.type === 'update') {
+          return prev.map(p => p.id === event.id ? event.data : p);
+        } else if (event.type === 'delete') {
+          return prev.filter(p => p.id !== event.id);
+        }
+        return prev;
+      });
+    });
+
+    // Subscribe to real-time task updates
+    const unsubscribeTask = base44.entities.Task.subscribe((event) => {
+      setTasks(prev => {
+        if (event.type === 'create') {
+          return [event.data, ...prev];
+        } else if (event.type === 'update') {
+          return prev.map(t => t.id === event.id ? event.data : t);
+        } else if (event.type === 'delete') {
+          return prev.filter(t => t.id !== event.id);
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      unsubscribeProject();
+      unsubscribeTask();
+    };
   }, []);
 
   const loadData = async () => {
