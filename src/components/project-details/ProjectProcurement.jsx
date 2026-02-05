@@ -151,14 +151,14 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
     try {
       if (imageFile) {
-        const { file_url } = await UploadFile({ file: imageFile });
-        updatedFormData.image_url = file_url;
+        const upload = await base44.integrations.Core.UploadFile({ file: imageFile });
+        updatedFormData.image_url = upload.file_url;
       }
 
       if (isEditing) {
-        await ProcurementItem.update(isEditing.id, updatedFormData);
+        await base44.entities.ProcurementItem.update(isEditing.id, updatedFormData);
       } else {
-        await ProcurementItem.create(updatedFormData);
+        await base44.entities.ProcurementItem.create(updatedFormData);
       }
 
       onUpdate();
