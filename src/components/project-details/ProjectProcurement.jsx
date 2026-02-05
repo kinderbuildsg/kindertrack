@@ -342,6 +342,8 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
         </TabsList>
 
         <TabsContent value="items" className="space-y-6">
+      <SupplierInvoiceTracker project={project} onUpdate={onUpdate} />
+      
       {viewMode === "admin" && isAdmin() ? (
         <Card className="mb-6 shadow-lg border-2 border-red-200 bg-red-50">
           <CardHeader className="bg-red-100">
@@ -429,43 +431,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
             </div>
           </CardContent>
         </Card>
-      ) : (
-        <Card className="mb-6 shadow-lg">
-          <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                  <LinkIcon className="w-5 h-5 text-sky-500" />
-                  Proposal Links
-              </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-              {[1, 2, 3].map(num => (
-                  <div key={num} className="flex items-center gap-2">
-                      <Label htmlFor={`proposal-link-${num}`} className="w-24 shrink-0">Proposal {num}</Label>
-                      <Input
-                          id={`proposal-link-${num}`}
-                          placeholder="Paste Google Drive link here..."
-                          value={proposalLinks[num] || ''}
-                          onChange={(e) => handleLinkChange(num, e.target.value)}
-                      />
-                      <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={!proposalLinks[num]}
-                          onClick={() => window.open(proposalLinks[num], '_blank')}
-                      >
-                          <ExternalLink className="w-4 h-4" />
-                      </Button>
-                  </div>
-              ))}
-          </CardContent>
-          <CardFooter>
-              <Button onClick={handleSaveLinks} disabled={isSavingLinks}>
-                  {isSavingLinks ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                  Save Links
-              </Button>
-          </CardFooter>
-        </Card>
-      )}
+      ) : null}
       {viewMode === "client" && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex justify-between items-center mb-4">
