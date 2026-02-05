@@ -213,95 +213,165 @@ export default function DealClosed({ project, onUpdate }) {
           );
           }
 
-  const terms = paymentTerms || DEFAULT_PAYMENT_TERMS;
+  const terms = paymentTerms || PAYMENT_TERMS_3;
+  const totalReceived = terms.filter(t => t.received).reduce((sum, t) => sum + t.percentage, 0);
+  const allReceived = totalReceived === 100;
 
   return (
-    <Card className="border-green-200 bg-green-50">
-      <CardHeader>
+    <Card className="border-green-200 bg-white">
+      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200">
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <CheckCircle2 className="w-6 h-6 text-green-600" />
             Deal Closed
           </span>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsPaymentEditing(!isPaymentEditing)}>
-              {isPaymentEditing ? 'Done' : 'Terms'}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-              Edit
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+            Edit Details
+          </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label className="text-gray-500">Closed Date</Label>
-            <p className="font-medium">{new Date(project.deal_closed_date).toLocaleDateString('en-SG')}</p>
+      <CardContent className="space-y-6 pt-6">
+        {/* Project & Revenue Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+            <Label className="text-gray-600 font-medium">Closed Date</Label>
+            <p className="text-xl font-bold text-blue-700 mt-1">
+              {new Date(project.deal_closed_date).toLocaleDateString('en-SG')}
+            </p>
           </div>
-          <div>
-            <Label className="text-gray-500">Project Value</Label>
-            <p className="font-medium text-green-600">S$ {project.estimated_value?.toLocaleString() || '0'}</p>
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 rounded-lg border border-emerald-200">
+            <Label className="text-gray-600 font-medium">Project Value</Label>
+            <p className="text-xl font-bold text-emerald-700 mt-1">
+              S$ {project.estimated_value?.toLocaleString() || '0'}
+            </p>
+          </div>
+          <div className={`bg-gradient-to-br p-4 rounded-lg border ${
+            allReceived 
+              ? 'from-green-50 to-green-100 border-green-200' 
+              : 'from-orange-50 to-orange-100 border-orange-200'
+          }`}>
+            <Label className="text-gray-600 font-medium">Payment Status</Label>
+            <p className={`text-xl font-bold mt-1 ${allReceived ? 'text-green-700' : 'text-orange-700'}`}>
+              {totalReceived}% Received
+            </p>
           </div>
         </div>
 
-        {isPaymentEditing ? (
-          <div className="space-y-3 bg-white p-4 rounded-lg border border-green-200">
-            {terms.map((term, idx) => {
-              const amount = project.estimated_value ? (project.estimated_value * term.percentage / 100).toFixed(2) : '0.00';
-              return (
-                <div key={idx} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">{term.label}</p>
-                      <p className="text-lg font-bold text-green-600">S$ {parseFloat(amount).toLocaleString()}</p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant={term.received ? "default" : "outline"}
-                      onClick={() => togglePaymentReceived(idx)}
-                      className={term.received ? "bg-green-600 hover:bg-green-700" : ""}
-                    >
-                      <Check className="w-4 h-4 mr-1" />
-                      {term.received ? 'Received' : 'Mark'}
-                    </Button>
-                  </div>
-                  {term.received && term.received_date && (
-                    <p className="text-xs text-gray-500">Received on {new Date(term.received_date).toLocaleDateString('en-SG')}</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {terms.map((term, idx) => {
-              const amount = project.estimated_value ? (project.estimated_value * term.percentage / 100).toFixed(2) : '0.00';
-              const isReceived = term.received;
-              return (
-                <div key={idx} className={`flex items-center justify-between p-3 rounded-lg ${isReceived ? 'bg-green-100' : 'bg-white border border-green-200'}`}>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{term.label}</p>
-                    <p className="text-sm font-bold text-green-600">S$ {parseFloat(amount).toLocaleString()}</p>
-                  </div>
-                  {isReceived && <Check className="w-5 h-5 text-green-600" />}
-                </div>
-              );
-            })}
+        {/* Google Drive Link */}
+        {project.google_drive_link && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-gray-600 font-medium block mb-1">Chosen Project</Label>
+                <p className="text-sm text-gray-600 truncate">Google Drive project files</p>
+              </div>
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => window.open(project.google_drive_link, '_blank')}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open
+              </Button>
+            </div>
           </div>
         )}
 
-        {project.signed_proposal_url && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => window.open(project.signed_proposal_url, '_blank')}
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            View Signed Document
-          </Button>
-        )}
+        {/* Payment Terms Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-gray-900 text-lg">Payment Schedule</h3>
+            <span className={`text-sm font-medium px-3 py-1 rounded-full ${
+              allReceived 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-amber-100 text-amber-700'
+            }`}>
+              {terms.length} Terms
+            </span>
+          </div>
+          
+          <div className="space-y-3">
+            {terms.map((term, idx) => {
+              const amount = project.estimated_value ? (project.estimated_value * term.percentage / 100).toFixed(2) : '0.00';
+              const isReceived = term.received;
+              
+              return (
+                <div
+                  key={idx}
+                  className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                    isReceived
+                      ? 'bg-green-50 border-green-300'
+                      : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => togglePaymentReceived(idx)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          isReceived 
+                            ? 'bg-green-600 border-green-600' 
+                            : 'border-gray-300'
+                        }`}>
+                          {isReceived && <Check className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{term.label}</p>
+                          <p className="text-sm text-gray-500">{term.percentage}% of total value</p>
+                        </div>
+                      </div>
+                      {isReceived && term.received_date && (
+                        <p className="text-xs text-green-600 font-medium mt-2 ml-9">
+                          ✓ Received {new Date(term.received_date).toLocaleDateString('en-SG')}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-gray-900">
+                        S$ {parseFloat(amount).toLocaleString()}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant={isReceived ? "default" : "outline"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          togglePaymentReceived(idx);
+                        }}
+                        className={isReceived ? "bg-green-600 hover:bg-green-700 mt-2" : "mt-2"}
+                      >
+                        {isReceived ? (
+                          <>
+                            <Check className="w-3 h-3 mr-1" />
+                            Received
+                          </>
+                        ) : (
+                          'Mark as Received'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Documents */}
+        <div className="space-y-2 border-t pt-4">
+          <h4 className="font-semibold text-gray-900">Documents</h4>
+          {project.signed_proposal_url && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => window.open(project.signed_proposal_url, '_blank')}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              View Signed Proposal / PO
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
