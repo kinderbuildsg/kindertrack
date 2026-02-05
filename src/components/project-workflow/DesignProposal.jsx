@@ -62,6 +62,13 @@ export default function DesignProposal({ project, onUpdate }) {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handlePdfSelect = (proposalId, e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewPdfFiles(prev => ({ ...prev, [proposalId]: file }));
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
