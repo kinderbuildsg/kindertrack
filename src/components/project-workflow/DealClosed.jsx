@@ -132,6 +132,38 @@ export default function DealClosed({ project, onUpdate }) {
             />
           </div>
 
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="font-semibold text-gray-900">Payment Terms</h3>
+            {paymentTerms.map((term, idx) => (
+              <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{term.percentage}%</p>
+                  <p className="text-sm text-gray-500">{term.label.split(' - ')[1]}</p>
+                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={term.percentage}
+                  onChange={(e) => {
+                    const updated = [...paymentTerms];
+                    updated[idx].percentage = parseInt(e.target.value) || 0;
+                    setPaymentTerms(updated);
+                  }}
+                  className="w-20 text-center"
+                />
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPaymentTerms(DEFAULT_PAYMENT_TERMS)}
+              className="w-full"
+            >
+              Reset to Default (40%, 30%, 30%)
+            </Button>
+          </div>
+
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -141,10 +173,10 @@ export default function DealClosed({ project, onUpdate }) {
               Cancel
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
+          </CardContent>
+          </Card>
+          );
+          }
 
   const depositAmount = project.estimated_value ? (project.estimated_value * 0.4).toFixed(2) : '0.00';
 
