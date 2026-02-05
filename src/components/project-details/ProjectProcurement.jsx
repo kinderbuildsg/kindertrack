@@ -572,8 +572,12 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
           </Dialog>
           </TabsContent>
 
-          <TabsContent value="supplier">
-          <SupplierQuotingForm project={project} />
+          <TabsContent value="supplier" className="space-y-4">
+            <EPDMCalculator />
+            <div className="border-t pt-6">
+              <h3 className="font-semibold mb-4">Supplier Quoting Form</h3>
+              <SupplierQuotingForm project={project} />
+            </div>
           </TabsContent>
           </Tabs>
           </>
