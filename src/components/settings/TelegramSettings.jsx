@@ -79,7 +79,13 @@ export default function TelegramSettings() {
   }
 
   return (
-    <div className="space-y-6">
+    <Tabs defaultValue="connection" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsTrigger value="connection">Telegram Connection</TabsTrigger>
+        <TabsTrigger value="preferences">Notification Preferences</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="connection" className="space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
