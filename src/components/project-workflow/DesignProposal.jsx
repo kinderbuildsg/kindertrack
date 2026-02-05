@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,17 @@ export default function DesignProposal({ project, onUpdate }) {
   });
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState(project.design_proposal_images || []);
+
+  useEffect(() => {
+    setFormData({
+      polycam_3d_scan_link: project.polycam_3d_scan_link || '',
+      client_requirements: project.client_requirements || '',
+      proposal_quote_1: project.proposal_quote_1 || '',
+      proposal_quote_2: project.proposal_quote_2 || '',
+      proposal_quote_3: project.proposal_quote_3 || ''
+    });
+    setImagePreviews(project.design_proposal_images || []);
+  }, [project.polycam_3d_scan_link, project.client_requirements, project.proposal_quote_1, project.proposal_quote_2, project.proposal_quote_3, project.design_proposal_images]);
 
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
