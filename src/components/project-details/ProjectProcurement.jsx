@@ -438,7 +438,7 @@ export default function ProjectProcurement({ project, onUpdate }) {
 
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-white">
           <DialogHeader>
             <DialogTitle>
               {isEditing ? 'Edit' : 'Add'} {itemType === 'playground' ? 'Playground Set' : itemType === 'fitness' ? 'Fitness Equipment' : 'EPDM Area'}
