@@ -140,8 +140,42 @@ export default function DealClosed({ project, onUpdate }) {
             />
           </div>
 
-          <div className="space-y-4 border-t pt-4">
-            <h3 className="font-semibold text-gray-900">Payment Terms</h3>
+          <div>
+            <Label>Chosen Project Google Drive Link</Label>
+            <Input
+              type="text"
+              value={formData.google_drive_link}
+              onChange={(e) => setFormData({ ...formData, google_drive_link: e.target.value })}
+              placeholder="Paste Google Drive folder/file link..."
+            />
+          </div>
+
+           <div className="space-y-4 border-t pt-4">
+             <div className="flex items-center justify-between">
+               <h3 className="font-semibold text-gray-900">Payment Terms</h3>
+               <div className="flex gap-2">
+                 <Button
+                   size="sm"
+                   variant={numPaymentTerms === 2 ? "default" : "outline"}
+                   onClick={() => {
+                     setNumPaymentTerms(2);
+                     setPaymentTerms(PAYMENT_TERMS_2);
+                   }}
+                 >
+                   2 Terms
+                 </Button>
+                 <Button
+                   size="sm"
+                   variant={numPaymentTerms === 3 ? "default" : "outline"}
+                   onClick={() => {
+                     setNumPaymentTerms(3);
+                     setPaymentTerms(PAYMENT_TERMS_3);
+                   }}
+                 >
+                   3 Terms
+                 </Button>
+               </div>
+             </div>
             {paymentTerms.map((term, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex-1">
