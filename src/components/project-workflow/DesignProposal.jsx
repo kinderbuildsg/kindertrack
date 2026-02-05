@@ -81,25 +81,22 @@ export default function DesignProposal({ project, onUpdate }) {
         uploadedUrls = [...uploadedUrls, ...uploads.map(u => u.file_url)];
       }
 
-      await base44.entities.Project.update(project.id, {
+      const updateData = {
         polycam_3d_scan_link: formData.polycam_3d_scan_link,
         client_requirements: formData.client_requirements,
+        google_drive_link: formData.google_drive_link,
         design_proposal_images: uploadedUrls,
-        proposal_quote_1: formData.proposal_quote_1,
-        proposal_quote_2: formData.proposal_quote_2,
-        proposal_quote_3: formData.proposal_quote_3
-      });
+        proposal_quote_1: proposalPdfs[0]?.url || '',
+        proposal_quote_2: proposalPdfs[1]?.url || '',
+        proposal_quote_3: proposalPdfs[2]?.url || ''
+      };
 
-      setFormData({
-        polycam_3d_scan_link: formData.polycam_3d_scan_link,
-        client_requirements: formData.client_requirements,
-        proposal_quote_1: formData.proposal_quote_1,
-        proposal_quote_2: formData.proposal_quote_2,
-        proposal_quote_3: formData.proposal_quote_3
-      });
+      await base44.entities.Project.update(project.id, updateData);
+
       onUpdate();
       setIsEditing(false);
       setImageFiles([]);
+      setNewPdfFiles({});
     } catch (error) {
       console.error('Error saving:', error);
       alert('Failed to save');
