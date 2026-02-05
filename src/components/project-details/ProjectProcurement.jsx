@@ -96,6 +96,8 @@ export default function ProjectProcurement({ project, onUpdate }) {
       setFormData({ item_type: 'fitness', supplier_currency: 'RMB' });
     } else if (type === 'epdm') {
       setFormData({ item_type: 'epdm', area_sqm: '', cost_per_sqm: 47, selling_price_per_sqm: '' });
+    } else if (type === 'misc') {
+      setFormData({ item_type: 'misc', supplier_currency: 'SGD' });
     }
     setOpenDialog(true);
   };
@@ -161,6 +163,7 @@ export default function ProjectProcurement({ project, onUpdate }) {
   const playgroundItems = items.filter(i => i.item_type === 'playground');
   const fitnessItems = items.filter(i => i.item_type === 'fitness');
   const epdmItems = items.filter(i => i.item_type === 'epdm');
+  const miscItems = items.filter(i => i.item_type === 'misc');
 
   const calculatePlaygroundCost = (item) => {
     if (item.supplier_currency === 'SGD') return item.supplier_price || 0;
@@ -181,9 +184,11 @@ export default function ProjectProcurement({ project, onUpdate }) {
   const totalFitnessSelling = fitnessItems.reduce((sum, item) => sum + (item.selling_price || 0), 0);
   const totalEpdmCost = epdmItems.reduce((sum, item) => sum + calculateEpdmCost(item), 0);
   const totalEpdmSelling = epdmItems.reduce((sum, item) => sum + calculateEpdmSelling(item), 0);
+  const totalMiscCost = miscItems.reduce((sum, item) => sum + (item.supplier_price || 0), 0);
+  const totalMiscSelling = miscItems.reduce((sum, item) => sum + (item.selling_price || 0), 0);
 
-  const grandTotalCost = totalPlaygroundCost + totalFitnessCost + totalEpdmCost;
-  const grandTotalSelling = totalPlaygroundSelling + totalFitnessSelling + totalEpdmSelling;
+  const grandTotalCost = totalPlaygroundCost + totalFitnessCost + totalEpdmCost + totalMiscCost;
+  const grandTotalSelling = totalPlaygroundSelling + totalFitnessSelling + totalEpdmSelling + totalMiscSelling;
 
   return (
     <div className="space-y-6">
@@ -416,6 +421,75 @@ export default function ProjectProcurement({ project, onUpdate }) {
         </CardContent>
       </Card>
 
+      {/* Miscellaneous Costing */}
+      <Card>
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
+          <CardTitle className="flex items-center justify-between">
+            <span>📋 Miscellaneous Costing</span>
+            <Button size="sm" onClick={() => openAddDialog('misc')}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Item
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {miscItems.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No miscellaneous items added yet</p>
+          ) : (
+            <div className="space-y-4">
+              {miscItems.map(item => (
+                <Card key={item.id} className="border-l-4 border-l-slate-500">
+                  <CardContent className="pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="font-semibold">{item.item_name}</p>
+                        <p className="text-xs text-gray-500">{item.notes}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Cost Price</p>
+                        <p className="font-semibold">S${(item.supplier_price || 0).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Selling Price</p>
+                        <p className="font-semibold text-green-600">S${(item.selling_price || 0).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(item.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {miscItems.length > 0 && (
+                <Card className="bg-slate-50">
+                  <CardContent className="pt-4">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-xs text-gray-500">Total Cost</p>
+                        <p className="text-lg font-bold text-slate-700">S${totalMiscCost.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Total Selling</p>
+                        <p className="text-lg font-bold text-green-600">S${totalMiscSelling.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Profit</p>
+                        <p className="text-lg font-bold text-blue-600">S${(totalMiscSelling - totalMiscCost).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Grand Total */}
       <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
         <CardContent className="pt-6">
@@ -441,12 +515,64 @@ export default function ProjectProcurement({ project, onUpdate }) {
         <DialogContent className="max-w-2xl bg-white">
           <DialogHeader>
             <DialogTitle>
-              {isEditing ? 'Edit' : 'Add'} {itemType === 'playground' ? 'Playground Set' : itemType === 'fitness' ? 'Fitness Equipment' : 'EPDM Area'}
+              {isEditing ? 'Edit' : 'Add'} {itemType === 'playground' ? 'Playground Set' : itemType === 'fitness' ? 'Fitness Equipment' : itemType === 'epdm' ? 'EPDM Area' : 'Miscellaneous Item'}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            {itemType !== 'epdm' ? (
+            {itemType === 'epdm' ? (
+              <>
+                <div className="space-y-2">
+                  <Label>Area Name</Label>
+                  <Input value={formData.item_name || ''} onChange={(e) => setFormData({ ...formData, item_name: e.target.value })} placeholder="e.g. Main Play Area" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Area (m²)</Label>
+                  <Input type="number" step="0.1" value={formData.area_sqm || ''} onChange={(e) => setFormData({ ...formData, area_sqm: parseFloat(e.target.value) })} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cost Price ($/m²)</Label>
+                    <Input type="number" step="0.01" value={formData.cost_per_sqm || 47} onChange={(e) => setFormData({ ...formData, cost_per_sqm: parseFloat(e.target.value) })} />
+                    <p className="text-xs text-gray-500">Default: $47/m²</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Selling Price ($/m²)</Label>
+                    <Input type="number" step="0.01" value={formData.selling_price_per_sqm || ''} onChange={(e) => setFormData({ ...formData, selling_price_per_sqm: parseFloat(e.target.value) })} />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Notes</Label>
+                  <Textarea value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Additional details..." />
+                </div>
+              </>
+            ) : itemType === 'misc' ? (
+              <>
+                <div className="space-y-2">
+                  <Label>Item Name</Label>
+                  <Input value={formData.item_name || ''} onChange={(e) => setFormData({ ...formData, item_name: e.target.value })} placeholder="e.g. Installation, Labour, Permits" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cost Price (SGD)</Label>
+                    <Input type="number" step="0.01" value={formData.supplier_price || ''} onChange={(e) => setFormData({ ...formData, supplier_price: parseFloat(e.target.value) })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Selling Price (SGD)</Label>
+                    <Input type="number" step="0.01" value={formData.selling_price || ''} onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) })} />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Notes</Label>
+                  <Textarea value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Description of miscellaneous cost..." />
+                </div>
+              </>
+            ) : (
               <>
                 <div className="space-y-2">
                   <Label>Item Name</Label>
@@ -493,35 +619,6 @@ export default function ProjectProcurement({ project, onUpdate }) {
                 <div className="space-y-2">
                   <Label>Selling Price (SGD)</Label>
                   <Input type="number" step="0.01" value={formData.selling_price || ''} onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) })} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Textarea value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Additional details..." />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label>Area Name</Label>
-                  <Input value={formData.item_name || ''} onChange={(e) => setFormData({ ...formData, item_name: e.target.value })} placeholder="e.g. Main Play Area" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Area (m²)</Label>
-                  <Input type="number" step="0.1" value={formData.area_sqm || ''} onChange={(e) => setFormData({ ...formData, area_sqm: parseFloat(e.target.value) })} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Cost Price ($/m²)</Label>
-                    <Input type="number" step="0.01" value={formData.cost_per_sqm || 47} onChange={(e) => setFormData({ ...formData, cost_per_sqm: parseFloat(e.target.value) })} />
-                    <p className="text-xs text-gray-500">Default: $47/m²</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Selling Price ($/m²)</Label>
-                    <Input type="number" step="0.01" value={formData.selling_price_per_sqm || ''} onChange={(e) => setFormData({ ...formData, selling_price_per_sqm: parseFloat(e.target.value) })} />
-                  </div>
                 </div>
 
                 <div className="space-y-2">
