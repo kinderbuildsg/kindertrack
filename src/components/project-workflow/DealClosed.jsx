@@ -178,7 +178,7 @@ export default function DealClosed({ project, onUpdate }) {
           );
           }
 
-  const depositAmount = project.estimated_value ? (project.estimated_value * 0.4).toFixed(2) : '0.00';
+  const terms = paymentTerms || DEFAULT_PAYMENT_TERMS;
 
   return (
     <Card className="border-green-200 bg-green-50">
@@ -188,9 +188,14 @@ export default function DealClosed({ project, onUpdate }) {
             <CheckCircle2 className="w-5 h-5 text-green-600" />
             Deal Closed
           </span>
-          <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-            Edit
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setIsPaymentEditing(!isPaymentEditing)}>
+              {isPaymentEditing ? 'Done' : 'Terms'}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+              Edit
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -205,11 +210,51 @@ export default function DealClosed({ project, onUpdate }) {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-green-200">
-          <Label className="text-gray-500">Initial Deposit (40%)</Label>
-          <p className="text-2xl font-bold text-green-600">S$ {parseFloat(depositAmount).toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-1">Ready to receive initial deposit</p>
-        </div>
+        {isPaymentEditing ? (
+          <div className="space-y-3 bg-white p-4 rounded-lg border border-green-200">
+            {terms.map((term, idx) => {
+              const amount = project.estimated_value ? (project.estimated_value * term.percentage / 100).toFixed(2) : '0.00';
+              return (
+                <div key={idx} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">{term.label}</p>
+                      <p className="text-lg font-bold text-green-600">S$ {parseFloat(amount).toLocaleString()}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={term.received ? "default" : "outline"}
+                      onClick={() => togglePaymentReceived(idx)}
+                      className={term.received ? "bg-green-600 hover:bg-green-700" : ""}
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      {term.received ? 'Received' : 'Mark'}
+                    </Button>
+                  </div>
+                  {term.received && term.received_date && (
+                    <p className="text-xs text-gray-500">Received on {new Date(term.received_date).toLocaleDateString('en-SG')}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {terms.map((term, idx) => {
+              const amount = project.estimated_value ? (project.estimated_value * term.percentage / 100).toFixed(2) : '0.00';
+              const isReceived = term.received;
+              return (
+                <div key={idx} className={`flex items-center justify-between p-3 rounded-lg ${isReceived ? 'bg-green-100' : 'bg-white border border-green-200'}`}>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{term.label}</p>
+                    <p className="text-sm font-bold text-green-600">S$ {parseFloat(amount).toLocaleString()}</p>
+                  </div>
+                  {isReceived && <Check className="w-5 h-5 text-green-600" />}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {project.signed_proposal_url && (
           <Button
