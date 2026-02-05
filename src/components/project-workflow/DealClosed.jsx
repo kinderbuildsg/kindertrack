@@ -66,10 +66,17 @@ export default function DealClosed({ project, onUpdate }) {
     setIsSaving(false);
   };
 
-  const togglePaymentReceived = async (index) => {
+  const togglePaymentReceived = async (index, markReceived = true) => {
     const updated = [...paymentTerms];
-    updated[index].received = !updated[index].received;
-    updated[index].received_date = updated[index].received ? new Date().toISOString().split('T')[0] : null;
+    if (markReceived) {
+      updated[index].received = true;
+      if (!updated[index].received_date) {
+        updated[index].received_date = new Date().toISOString().split('T')[0];
+      }
+    } else {
+      updated[index].received = false;
+      updated[index].received_date = null;
+    }
     setPaymentTerms(updated);
 
     try {
@@ -79,6 +86,40 @@ export default function DealClosed({ project, onUpdate }) {
       onUpdate();
     } catch (error) {
       console.error('Error updating payment:', error);
+    }
+  };
+
+  const updatePaymentDate = async (index, date) => {
+    const updated = [...paymentTerms];
+    updated[index].received_date = date;
+    updated[index].received = !!date;
+    setPaymentTerms(updated);
+
+    try {
+      await base44.entities.Project.update(project.id, {
+        payment_terms: updated
+      });
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating payment date:', error);
+    }
+  };
+
+  const getPaymentStatus = (term, dealClosedDate) => {
+    if (term.received) {
+      return { status: 'received', label: 'Received', color: 'text-green-600' };
+    }
+    
+    const closedDate = new Date(dealClosedDate);
+    const dueDate = new Date(closedDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const today = new Date();
+    
+    if (today > dueDate) {
+      return { status: 'overdue', label: 'Overdue', color: 'text-red-600' };
+    } else if (today > new Date(closedDate.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+      return { status: 'pending', label: 'Due Soon', color: 'text-orange-600' };
+    } else {
+      return { status: 'pending', label: 'Pending', color: 'text-blue-600' };
     }
   };
 
