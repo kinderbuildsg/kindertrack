@@ -154,7 +154,7 @@ export default function ProjectTasks({ project, tasks, onUpdate }) {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Task Checklist - {project.stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</CardTitle>
+            <CardTitle>Tasks</CardTitle>
             <p className="text-sm text-gray-500 mt-1">
               {completedCount} of {totalCount} tasks completed ({Math.round(completionPercentage)}%)
             </p>
@@ -177,7 +177,14 @@ export default function ProjectTasks({ project, tasks, onUpdate }) {
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent>
+        <Tabs value={viewMode} onValueChange={setViewMode} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="checklist">Checklist View</TabsTrigger>
+            <TabsTrigger value="kanban">Kanban Board</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="checklist" className="space-y-3">
         {currentStageTasks.map(task => (
           <div
             key={task.id}
