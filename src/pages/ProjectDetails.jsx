@@ -15,6 +15,7 @@ import WorkProgress from "../components/project-workflow/WorkProgress";
 import Completion from "../components/project-workflow/Completion";
 import ProjectGantt from "../components/project-details/ProjectGantt";
 import ProjectQC from "../components/project-details/ProjectQC";
+import ProjectFinancials from "../components/project-details/ProjectFinancials";
 
 export default function ProjectDetails() {
   const navigate = useNavigate();
