@@ -104,7 +104,7 @@ export default function DesignProposal({ project, onUpdate }) {
     setIsSaving(false);
   };
 
-  if (!isEditing && !project.design_proposal_images?.length && !project.polycam_3d_scan_link) {
+  if (!isEditing && !project.design_proposal_images?.length && !project.polycam_3d_scan_link && !project.google_drive_link) {
     return (
       <Card>
         <CardHeader>
