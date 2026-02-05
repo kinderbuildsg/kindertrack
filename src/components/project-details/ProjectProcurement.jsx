@@ -63,6 +63,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   const [isSavingLinks, setIsSavingLinks] = useState(false);
   const [user, setUser] = useState(null);
   const [viewMode, setViewMode] = useState("client");
+  const [selectedTab, setSelectedTab] = useState("items");
 
   useEffect(() => {
     loadUser();
