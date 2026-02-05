@@ -71,8 +71,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   const loadUser = async () => {
     try {
-      const { auth } = await import("@/api/base44Client");
-      const currentUser = await auth.me();
+      const currentUser = await base44.auth.me();
       setUser(currentUser);
     } catch (error) {
       console.error("Error loading user:", error);
