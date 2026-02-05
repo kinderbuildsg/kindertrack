@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, MapPin, Upload, Loader2, ExternalLink, Plus, X } from "lucide-react";
+import OptimizedImage from "@/components/common/OptimizedImage";
 
 export default function SiteEvaluation({ project, onUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
