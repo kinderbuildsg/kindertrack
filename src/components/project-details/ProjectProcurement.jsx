@@ -569,9 +569,15 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
               Save
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+          </DialogContent>
+          </Dialog>
+          </TabsContent>
 
-}
+          <TabsContent value="supplier">
+          <SupplierQuotingForm project={project} />
+          </TabsContent>
+          </Tabs>
+          </>
+          );
+
+          }
