@@ -649,24 +649,6 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
           </DialogFooter>
           </DialogContent>
           </Dialog>
-          </TabsContent>
-
-          <TabsContent value="supplier" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>EPDM Calculator</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">Use our interactive EPDM calculator to estimate surfacing needs and costs.</p>
-                <Button onClick={() => window.open('https://ui-nexus-vault.lovable.app/', '_blank')} variant="outline">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Open EPDM Calculator
-                </Button>
-              </CardContent>
-            </Card>
-            <SupplierQuotingForm project={project} />
-          </TabsContent>
-          </Tabs>
-          </>
+          </div>
           );
           }
