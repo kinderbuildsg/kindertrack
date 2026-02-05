@@ -334,6 +334,13 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
         </div>
       )}
 
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full mb-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="items">Items & Quotations</TabsTrigger>
+          <TabsTrigger value="supplier">Supplier Quoting</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="items" className="space-y-6">
       {viewMode === "admin" && isAdmin() ? (
         <Card className="mb-6 shadow-lg border-2 border-red-200 bg-red-50">
           <CardHeader className="bg-red-100">
