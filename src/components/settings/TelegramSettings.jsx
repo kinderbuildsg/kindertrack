@@ -3,7 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageCircle, Check, X, Loader2 } from 'lucide-react';
+import NotificationPreferences from './NotificationPreferences';
 
 export default function TelegramSettings() {
   const [telegramConnection, setTelegramConnection] = useState(null);
