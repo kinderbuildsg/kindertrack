@@ -65,6 +65,7 @@ import Team from './pages/Team';
 import TemplateManagement from './pages/TemplateManagement';
 import UserManagement from './pages/UserManagement';
 import WorkProgressPage from './pages/WorkProgressPage';
+import ManpowerPayroll from './pages/ManpowerPayroll';
 import __Layout from './Layout.jsx';
 
 
@@ -87,6 +88,7 @@ export const PAGES = {
     "TemplateManagement": TemplateManagement,
     "UserManagement": UserManagement,
     "WorkProgressPage": WorkProgressPage,
+    "ManpowerPayroll": ManpowerPayroll,
 }
 
 export const pagesConfig = {
