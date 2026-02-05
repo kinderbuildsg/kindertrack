@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { CheckCircle2, XCircle, AlertCircle, Plus, Edit, Trash2, Upload, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 const DEFAULT_CHECKLIST = [
   { id: '1', item: 'Surface finish and quality', status: 'pass', notes: '' },
