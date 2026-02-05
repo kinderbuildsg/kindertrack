@@ -179,35 +179,52 @@ export default function DesignProposal({ project, onUpdate }) {
             )}
           </div>
 
+          <div className="space-y-4 border-t pt-4">
+            <div>
+              <Label className="text-base font-semibold">Google Drive Link</Label>
+              <p className="text-xs text-gray-500 mb-2">Share your design file or project folder</p>
+              <Input
+                type="url"
+                value={formData.google_drive_link}
+                onChange={(e) => setFormData({ ...formData, google_drive_link: e.target.value })}
+                placeholder="Paste Google Drive share link..."
+              />
+            </div>
+          </div>
+
           <div className="space-y-3 border-t pt-4">
-            <Label className="text-base font-semibold">Proposal Quotations (Google Drive Links)</Label>
-            <div>
-              <Label>Proposal 1</Label>
-              <Input
-                type="url"
-                value={formData.proposal_quote_1}
-                onChange={(e) => setFormData({ ...formData, proposal_quote_1: e.target.value })}
-                placeholder="Paste Google Drive share link for proposal 1..."
-              />
-            </div>
-            <div>
-              <Label>Proposal 2</Label>
-              <Input
-                type="url"
-                value={formData.proposal_quote_2}
-                onChange={(e) => setFormData({ ...formData, proposal_quote_2: e.target.value })}
-                placeholder="Paste Google Drive share link for proposal 2..."
-              />
-            </div>
-            <div>
-              <Label>Proposal 3</Label>
-              <Input
-                type="url"
-                value={formData.proposal_quote_3}
-                onChange={(e) => setFormData({ ...formData, proposal_quote_3: e.target.value })}
-                placeholder="Paste Google Drive share link for proposal 3..."
-              />
-            </div>
+            <Label className="text-base font-semibold">Proposal Quotations (PDF Files)</Label>
+            <p className="text-xs text-gray-500 mb-3">Upload PDF files or provide Google Drive links for your proposals</p>
+            {[1, 2, 3].map((num) => (
+              <div key={num} className="border rounded-lg p-4 space-y-2">
+                <Label>Proposal {num}</Label>
+                <div className="space-y-2">
+                  <div>
+                    <Label className="text-sm text-gray-600">Upload PDF</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => handlePdfSelect(num, e)}
+                      className="mb-2"
+                    />
+                    {newPdfFiles[num] && <p className="text-xs text-green-600">✓ {newPdfFiles[num].name}</p>}
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-600">Or Google Drive Link</Label>
+                    <Input
+                      type="url"
+                      value={proposalPdfs[num - 1]?.url}
+                      onChange={(e) => {
+                        const updated = [...proposalPdfs];
+                        updated[num - 1] = { ...updated[num - 1], url: e.target.value };
+                        setProposalPdfs(updated);
+                      }}
+                      placeholder="Paste Google Drive link..."
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="flex gap-2">
