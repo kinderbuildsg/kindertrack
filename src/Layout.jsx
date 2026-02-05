@@ -24,6 +24,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { MessageSquare } from "lucide-react";
 import NotificationPanel from "./components/notifications/NotificationPanel";
+import PerformanceOptimizer from "./components/performance/PerformanceOptimizer";
 
 const getNavigationItems = (user) => {
   const role = user?.role;
