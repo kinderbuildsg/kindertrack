@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Plus, Trash2, Edit, Loader2, Image, RefreshCw, X, Link as LinkIcon, Save, ExternalLink } from "lucide-react";
 import SupplierQuotingForm from "../procurement/SupplierQuotingForm";
+import EPDMCalculator from "../procurement/EPDMCalculator";
 
 // Currency Converter Component
 const CurrencyConverter = ({ value, fromCurrency }) => {
