@@ -31,12 +31,18 @@ export default function DesignProposal({ project, onUpdate }) {
     setFormData({
       polycam_3d_scan_link: project.polycam_3d_scan_link || '',
       client_requirements: project.client_requirements || '',
+      google_drive_link: project.google_drive_link || '',
       proposal_quote_1: project.proposal_quote_1 || '',
       proposal_quote_2: project.proposal_quote_2 || '',
       proposal_quote_3: project.proposal_quote_3 || ''
     });
     setImagePreviews(project.design_proposal_images || []);
-  }, [project.polycam_3d_scan_link, project.client_requirements, project.proposal_quote_1, project.proposal_quote_2, project.proposal_quote_3, project.design_proposal_images]);
+    setProposalPdfs([
+      { id: 1, url: project.proposal_quote_1 || '', name: 'Proposal 1' },
+      { id: 2, url: project.proposal_quote_2 || '', name: 'Proposal 2' },
+      { id: 3, url: project.proposal_quote_3 || '', name: 'Proposal 3' }
+    ]);
+  }, [project.polycam_3d_scan_link, project.client_requirements, project.google_drive_link, project.proposal_quote_1, project.proposal_quote_2, project.proposal_quote_3, project.design_proposal_images]);
 
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
