@@ -350,8 +350,8 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
         </TabsList>
 
         <TabsContent value="playground" className="space-y-6">
-      
-      {viewMode === "admin" && isAdmin() ? (
+          {/* Admin View */}
+          {viewMode === "admin" && isAdmin() ? (
         <Card className="mb-6 shadow-lg border-2 border-red-200 bg-red-50">
           <CardHeader className="bg-red-100">
             <CardTitle className="flex items-center gap-2 text-red-800">
