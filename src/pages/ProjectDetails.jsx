@@ -188,18 +188,21 @@ export default function ProjectDetails() {
             <DealClosed project={project} onUpdate={handleUpdate} />
           )}
 
-          {/* Stage 4: Procurement */}
+          {/* Stage 4: Procurement & Financials */}
           {currentStageIndex >= 3 && (
-            <div>
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <ChevronRight className="w-5 h-5" />
-                Procurement & Ordering
-              </h2>
-              <ProjectProcurement 
-                project={project}
-                items={procurementItems}
-                onUpdate={handleUpdate}
-              />
+            <div className="space-y-6">
+              <ProjectFinancials project={project} />
+              <div>
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <ChevronRight className="w-5 h-5" />
+                  Procurement & Ordering
+                </h2>
+                <ProjectProcurement 
+                  project={project}
+                  items={procurementItems}
+                  onUpdate={handleUpdate}
+                />
+              </div>
             </div>
           )}
 
