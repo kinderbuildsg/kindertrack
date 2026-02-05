@@ -67,6 +67,7 @@ export default function ProjectTasks({ project, tasks, onUpdate }) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [allUsers, setAllUsers] = useState([]); // Added allUsers state
+  const [viewMode, setViewMode] = useState("checklist"); // Added viewMode state
 
   useEffect(() => {
     loadUsers();
