@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { projectId, message, type = 'update', recipientEmails = [] } = await req.json();
+    const { projectId, message, notificationType = 'update', recipientEmails = [] } = await req.json();
 
     if (!projectId || !message) {
       return Response.json({ error: 'Missing projectId or message' }, { status: 400 });
@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     // Filter recipients: use provided list or all team members
     const targetEmails = recipientEmails.length > 0 ? recipientEmails : teamMembers;
 
-    // Fetch Telegram connections for team members
+    // Fetch Telegram connections and preferences for team members
     const telegramUsers = await base44.entities.TelegramUser.filter({
       user_email: { $in: targetEmails },
       is_active: true,
@@ -50,27 +50,64 @@ Deno.serve(async (req) => {
     // Prepare notification message
     const formatMessage = (msg, projectTitle, type) => {
       const emoji = {
-        'update': '📢',
-        'alert': '⚠️',
-        'task': '✅',
-        'payment': '💰',
-        'completed': '🎉'
+        'task_assigned': '✅',
+        'stage_change': '📊',
+        'milestone_reached': '🎯',
+        'risk_detected': '⚠️',
+        'payment_received': '💰',
+        'deadline_approaching': '⏰',
+        'comment_added': '💬',
+        'update': '📢'
       }[type] || '📢';
 
       return `${emoji} *${projectTitle}*\n\n${msg}`;
     };
 
-    const notificationMessage = formatMessage(message, project?.project_title || 'Project Update', type);
+    const notificationMessage = formatMessage(message, project?.project_title || 'Project Update', notificationType);
 
     // Send messages to all Telegram users
     const results = [];
     for (const telegramUser of telegramUsers) {
       try {
+        // Fetch user preferences
+        const preferences = await base44.entities.NotificationPreference.filter({
+          user_email: telegramUser.user_email
+        });
+
+        const prefs = preferences[0] || {};
+        
+        // Check if user wants this type of notification
+        const preferencesMap = {
+          'task_assigned': 'notify_task_assigned',
+          'stage_change': 'notify_stage_change',
+          'milestone_reached': 'notify_milestone_reached',
+          'risk_detected': 'notify_risk_detected',
+          'payment_received': 'notify_payment_received',
+          'deadline_approaching': 'notify_deadline_approaching',
+          'comment_added': 'notify_comment_added'
+        };
+
+        const preferenceKey = preferencesMap[notificationType];
+        if (preferenceKey && !prefs[preferenceKey]) {
+          results.push({
+            email: telegramUser.user_email,
+            success: false,
+            skipped: true,
+            reason: 'User disabled this notification type'
+          });
+          continue;
+        }
+
+        // Determine chat ID (channel or personal)
+        const chatId = prefs.use_channel && prefs.telegram_channel_id 
+          ? prefs.telegram_channel_id 
+          : telegramUser.chat_id;
+
         const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            chat_id: telegramUser.chat_id,
+            chat_id: chatId,
             text: notificationMessage,
             parse_mode: 'Markdown'
           })
@@ -92,10 +129,11 @@ Deno.serve(async (req) => {
     }
 
     const successCount = results.filter(r => r.success).length;
+    const skippedCount = results.filter(r => r.skipped).length;
 
     return Response.json({
       success: true,
-      message: `Notification sent to ${successCount} team members`,
+      message: `Notification sent to ${successCount} team members (${skippedCount} skipped by preferences)`,
       sentTo: results
     });
 
