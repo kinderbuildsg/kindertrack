@@ -193,6 +193,11 @@ export default function TelegramSettings() {
           </p>
         </CardContent>
       </Card>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="preferences">
+        <NotificationPreferences />
+      </TabsContent>
+    </Tabs>
   );
 }
