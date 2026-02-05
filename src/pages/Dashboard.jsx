@@ -50,8 +50,8 @@ export default function Dashboard() {
       setUser(currentUser);
       
       const [projectsData, tasksData] = await Promise.all([
-        base44.entities.Project.list("-updated_date"),
-        base44.entities.Task.list("-due_date", 200)
+        base44.entities.Project.list("-updated_date", 100),
+        base44.entities.Task.list("-due_date", 150)
       ]);
       
       setProjects(projectsData);
