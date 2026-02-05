@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,14 @@ export default function DealClosed({ project, onUpdate }) {
     estimated_value: project.estimated_value || '',
     google_drive_link: project.google_drive_link || ''
   });
+
+  useEffect(() => {
+    setFormData({
+      deal_closed_date: project.deal_closed_date || new Date().toISOString().split('T')[0],
+      estimated_value: project.estimated_value || '',
+      google_drive_link: project.google_drive_link || ''
+    });
+  }, [project.deal_closed_date, project.estimated_value, project.google_drive_link]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
