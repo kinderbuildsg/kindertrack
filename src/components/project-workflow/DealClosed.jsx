@@ -56,19 +56,20 @@ export default function DealClosed({ project, onUpdate }) {
         signedProposalUrl = upload.file_url;
       }
 
-      await base44.entities.Project.update(project.id, {
-        signed_proposal_url: signedProposalUrl,
+      const updateData = {
         deal_closed_date: formData.deal_closed_date,
         estimated_value: parseFloat(formData.estimated_value) || 0,
-        google_drive_link: formData.google_drive_link,
+        google_drive_link: formData.google_drive_link || null,
         payment_terms: paymentTerms
-      });
+      };
 
-      setFormData({
-        deal_closed_date: formData.deal_closed_date,
-        estimated_value: formData.estimated_value,
-        google_drive_link: formData.google_drive_link
-      });
+      if (signedProposalUrl) {
+        updateData.signed_proposal_url = signedProposalUrl;
+      }
+
+      const result = await base44.entities.Project.update(project.id, updateData);
+      console.log('Update result:', result);
+
       onUpdate();
       setIsEditing(false);
       setSignedProposalFile(null);
