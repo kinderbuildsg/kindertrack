@@ -1,0 +1,397 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Plus, Download, Trash2, Edit, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+
+export default function ProjectFinancials({ project }) {
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [formData, setFormData] = useState({
+    category: 'materials',
+    description: '',
+    amount: '',
+    supplier: '',
+    invoice_number: '',
+    expense_date: format(new Date(), 'yyyy-MM-dd'),
+    payment_status: 'unpaid',
+    notes: ''
+  });
+
+  useEffect(() => {
+    loadExpenses();
+  }, [project?.id]);
+
+  const loadExpenses = async () => {
+    try {
+      const expenseData = await base44.entities.ProjectExpense.filter({ project_id: project.id });
+      setExpenses(expenseData);
+    } catch (error) {
+      console.error('Failed to load expenses:', error);
+      toast.error('Failed to load expenses');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateTotals = () => {
+    const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+    const totalRevenue = project?.estimated_value || 0;
+    const profit = totalRevenue - totalExpenses;
+    const margin = totalRevenue > 0 ? (profit / totalRevenue * 100).toFixed(2) : 0;
+
+    return { totalExpenses, totalRevenue, profit, margin };
+  };
+
+  const handleSaveExpense = async () => {
+    if (!formData.description || !formData.amount) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+
+    try {
+      const payload = {
+        project_id: project.id,
+        ...formData,
+        amount: parseFloat(formData.amount)
+      };
+
+      if (editingExpense?.id) {
+        await base44.entities.ProjectExpense.update(editingExpense.id, payload);
+        toast.success('✅ Expense updated');
+      } else {
+        await base44.entities.ProjectExpense.create(payload);
+        toast.success('✅ Expense recorded');
+      }
+
+      setShowForm(false);
+      setEditingExpense(null);
+      setFormData({
+        category: 'materials',
+        description: '',
+        amount: '',
+        supplier: '',
+        invoice_number: '',
+        expense_date: format(new Date(), 'yyyy-MM-dd'),
+        payment_status: 'unpaid',
+        notes: ''
+      });
+      loadExpenses();
+    } catch (error) {
+      console.error('Failed to save expense:', error);
+      toast.error('Failed to save expense');
+    }
+  };
+
+  const handleDeleteExpense = async (id) => {
+    if (!confirm('Delete this expense?')) return;
+    try {
+      await base44.entities.ProjectExpense.delete(id);
+      toast.success('✅ Expense deleted');
+      loadExpenses();
+    } catch (error) {
+      toast.error('Failed to delete expense');
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    setGenerating(true);
+    try {
+      const { data } = await base44.functions.invoke('generateInvoicePDF', {
+        projectId: project.id,
+        includeExpenses: true
+      });
+
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${project.project_number || 'project'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      toast.success('✅ Invoice downloaded');
+    } catch (error) {
+      console.error('Failed to generate invoice:', error);
+      toast.error('Failed to generate invoice');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (loading) return <div className="text-center py-8">Loading financials...</div>;
+
+  const { totalExpenses, totalRevenue, profit, margin } = calculateTotals();
+
+  // Check for late payments
+  const unpaidPayments = [];
+  const today = new Date();
+  if (project.payment_40_invoice_date && !project.payment_40_received) {
+    const dueDate = new Date(project.payment_40_invoice_date);
+    if (dueDate < today) {
+      unpaidPayments.push({ type: '40% Deposit', amount: totalRevenue * 0.4, daysLate: Math.floor((today - dueDate) / (1000 * 60 * 60 * 24)) });
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Financial Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs text-gray-600 mb-1">Revenue</p>
+            <p className="text-2xl font-bold text-blue-600">SGD ${totalRevenue.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs text-gray-600 mb-1">Expenses</p>
+            <p className="text-2xl font-bold text-red-600">SGD ${totalExpenses.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs text-gray-600 mb-1">Profit</p>
+            <p className={`text-2xl font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              SGD ${profit.toFixed(2)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs text-gray-600 mb-1">Margin</p>
+            <p className={`text-2xl font-bold ${margin >= 20 ? 'text-green-600' : 'text-amber-600'}`}>
+              {margin}%
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Late Payment Alerts */}
+      {unpaidPayments.length > 0 &&
+      <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6 flex gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-semibold text-red-900">Outstanding Payments</p>
+              {unpaidPayments.map((payment, idx) =>
+            <p key={idx} className="text-sm text-red-800 mt-1">
+                  {payment.type}: SGD ${payment.amount.toFixed(2)} ({payment.daysLate} days overdue)
+                </p>
+            )}
+            </div>
+          </CardContent>
+        </Card>
+      }
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <Button onClick={() => setShowForm(true)} className="bg-pink-300 text-primary-foreground px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 hover:bg-sky-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Expense
+        </Button>
+        <Button onClick={handleGenerateInvoice} disabled={generating} variant="outline">
+          <Download className="w-4 h-4 mr-2" />
+          {generating ? 'Generating...' : 'Download Invoice'}
+        </Button>
+      </div>
+
+      {/* Expenses Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Project Expenses</CardTitle>
+          <CardDescription>{expenses.length} expense(s)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {expenses.length === 0 ?
+          <p className="text-center text-gray-500 py-8">No expenses recorded</p> :
+
+          <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b">
+                  <tr>
+                    <th className="text-left py-2 font-semibold">Category</th>
+                    <th className="text-left py-2 font-semibold">Description</th>
+                    <th className="text-left py-2 font-semibold">Supplier</th>
+                    <th className="text-right py-2 font-semibold">Amount</th>
+                    <th className="text-left py-2 font-semibold">Status</th>
+                    <th className="text-center py-2 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.map((expense) =>
+                <tr key={expense.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3">
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {expense.category}
+                        </Badge>
+                      </td>
+                      <td className="py-3 text-gray-900 font-medium">{expense.description}</td>
+                      <td className="py-3 text-gray-600 text-xs">{expense.supplier || '-'}</td>
+                      <td className="py-3 text-right font-semibold">SGD ${expense.amount.toFixed(2)}</td>
+                      <td className="py-3">
+                        <Badge className={
+                    expense.payment_status === 'paid' ? 'bg-green-500' :
+                    expense.payment_status === 'partial' ? 'bg-yellow-500' :
+                    'bg-gray-400'
+                    }>
+                          {expense.payment_status}
+                        </Badge>
+                      </td>
+                      <td className="py-3 text-center">
+                        <button
+                      onClick={() => {
+                        setEditingExpense(expense);
+                        setFormData(expense);
+                        setShowForm(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-xs mr-3">
+
+                          <Edit className="w-4 h-4 inline" />
+                        </button>
+                        <button
+                      onClick={() => handleDeleteExpense(expense.id)}
+                      className="text-red-600 hover:text-red-700 text-xs">
+
+                          <Trash2 className="w-4 h-4 inline" />
+                        </button>
+                      </td>
+                    </tr>
+                )}
+                </tbody>
+              </table>
+            </div>
+          }
+        </CardContent>
+      </Card>
+
+      {/* Expense Form Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add Expense'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Category</Label>
+              <Select value={formData.category} onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="materials">Materials</SelectItem>
+                  <SelectItem value="labor">Labor</SelectItem>
+                  <SelectItem value="equipment">Equipment</SelectItem>
+                  <SelectItem value="subcontractor">Subcontractor</SelectItem>
+                  <SelectItem value="transport">Transport</SelectItem>
+                  <SelectItem value="utilities">Utilities</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Description *</Label>
+              <Input
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="What was purchased" />
+
+            </div>
+            <div>
+              <Label>Amount (SGD) *</Label>
+              <Input
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
+                placeholder="0.00" />
+
+            </div>
+            <div>
+              <Label>Supplier/Vendor</Label>
+              <Input
+                value={formData.supplier}
+                onChange={(e) => setFormData((prev) => ({ ...prev, supplier: e.target.value }))}
+                placeholder="Supplier name" />
+
+            </div>
+            <div>
+              <Label>Invoice Number</Label>
+              <Input
+                value={formData.invoice_number}
+                onChange={(e) => setFormData((prev) => ({ ...prev, invoice_number: e.target.value }))}
+                placeholder="INV-xxx" />
+
+            </div>
+            <div>
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={formData.expense_date}
+                onChange={(e) => setFormData((prev) => ({ ...prev, expense_date: e.target.value }))} />
+
+            </div>
+            <div>
+              <Label>Payment Status</Label>
+              <Select value={formData.payment_status} onValueChange={(value) => setFormData((prev) => ({ ...prev, payment_status: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                  <SelectItem value="partial">Partially Paid</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Textarea
+                value={formData.notes}
+                onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder="Additional notes"
+                className="min-h-16" />
+
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button onClick={handleSaveExpense} className="flex-1 bg-green-600 hover:bg-green-700">
+                Save
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingExpense(null);
+                  setFormData({
+                    category: 'materials',
+                    description: '',
+                    amount: '',
+                    supplier: '',
+                    invoice_number: '',
+                    expense_date: format(new Date(), 'yyyy-MM-dd'),
+                    payment_status: 'unpaid',
+                    notes: ''
+                  });
+                }}
+                className="flex-1">
+
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>);
+
+}
