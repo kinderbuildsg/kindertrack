@@ -52,6 +52,7 @@ export default function DealClosed({ project, onUpdate }) {
         signed_proposal_url: signedProposalUrl,
         deal_closed_date: formData.deal_closed_date,
         estimated_value: parseFloat(formData.estimated_value) || 0,
+        google_drive_link: formData.google_drive_link,
         payment_terms: paymentTerms
       });
 
