@@ -209,7 +209,10 @@ export default function ProjectDetails() {
 
           {/* Stage 6: Completion */}
           {currentStageIndex >= 5 && (
-            <Completion project={project} onUpdate={handleUpdate} />
+            <>
+              <ProjectQC project={project} />
+              <Completion project={project} onUpdate={handleUpdate} />
+            </>
           )}
 
           {/* Stage 7: Maintenance */}
