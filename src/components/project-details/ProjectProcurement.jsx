@@ -172,7 +172,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   const handleDelete = async (itemId) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
-      await ProcurementItem.delete(itemId);
+      await base44.entities.ProcurementItem.delete(itemId);
       onUpdate();
     }
   };
