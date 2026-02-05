@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addMonths, subMonths, isSameMonth, isSameDay, addDays, startOfDay } from "date-fns";
-import CalendarMonth from "../components/calendar/CalendarMonth";
-import CalendarWeek from "../components/calendar/CalendarWeek";
-import CalendarDay from "../components/calendar/CalendarDay";
+import CalendarMonth from "../components/calendar/CalendarMonth.jsx";
+import CalendarWeek from "../components/calendar/CalendarWeek.jsx";
+import CalendarDay from "../components/calendar/CalendarDay.jsx";
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
