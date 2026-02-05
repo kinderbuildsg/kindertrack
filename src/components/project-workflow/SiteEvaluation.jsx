@@ -263,7 +263,7 @@ export default function SiteEvaluation({ project, onUpdate }) {
             <Label className="text-gray-500">Site Photos</Label>
             <div className="grid grid-cols-4 gap-2 mt-2">
               {project.site_evaluation_images.map((url, idx) => (
-                <img key={idx} src={url} alt={`Site ${idx + 1}`} className="w-full h-24 object-cover rounded" />
+                <OptimizedImage key={idx} src={url} alt={`Site ${idx + 1}`} className="w-full h-24 object-cover rounded" />
               ))}
             </div>
           </div>
