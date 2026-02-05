@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   FolderKanban, 
   Users,
-  LayoutList
+  LayoutList,
+  Calendar as CalendarIcon
 } from "lucide-react";
 import {
   Sidebar,
