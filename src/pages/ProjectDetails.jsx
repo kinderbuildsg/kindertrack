@@ -168,6 +168,9 @@ export default function ProjectDetails() {
           </div>
         </div>
 
+        {/* Timeline */}
+        <ProjectGantt project={project} tasks={tasks} />
+
         {/* Stage Content */}
         <div className="space-y-6">
           {/* Stage 1: Site Evaluation */}
