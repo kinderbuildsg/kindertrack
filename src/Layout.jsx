@@ -123,13 +123,133 @@ export default function Layout({ children, currentPageName }) {
     <SidebarProvider>
       <style>{`
         :root {
-          --background: #FAFAF9;
+          /* Primary Palette */
           --primary: #0EA5E9;
+          --primary-dark: #0284C7;
+          --primary-light: #38BDF8;
           --primary-foreground: #ffffff;
+          
+          /* Secondary Palette */
           --secondary: #F0F9FF;
+          --secondary-dark: #E0F2FE;
+          
+          /* Accent & Status Colors */
           --accent: #F59E0B;
+          --success: #10B981;
+          --danger: #EF4444;
+          --warning: #F59E0B;
+          --info: #3B82F6;
+          
+          /* Neutral Grays - Refined */
+          --background: #FAFAF9;
+          --surface: #FFFFFF;
+          --surface-secondary: #F9FAFB;
           --muted: #F5F5F4;
+          --muted-foreground: #78716C;
           --border: #E7E5E4;
+          --border-light: #F5F5F4;
+          
+          /* Typography System */
+          --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          --font-mono: 'Monaco', 'Courier New', monospace;
+          
+          --text-primary: #1F2937;
+          --text-secondary: #6B7280;
+          --text-muted: #9CA3AF;
+          --text-inverted: #FFFFFF;
+          
+          /* Font Sizes */
+          --text-xs: 0.75rem;
+          --text-sm: 0.875rem;
+          --text-base: 1rem;
+          --text-lg: 1.125rem;
+          --text-xl: 1.25rem;
+          --text-2xl: 1.5rem;
+          --text-3xl: 1.875rem;
+          --text-4xl: 2.25rem;
+          
+          /* Font Weights */
+          --font-normal: 400;
+          --font-medium: 500;
+          --font-semibold: 600;
+          --font-bold: 700;
+          
+          /* Line Heights */
+          --leading-tight: 1.25;
+          --leading-normal: 1.5;
+          --leading-relaxed: 1.625;
+          
+          /* Spacing Scale */
+          --spacing-xs: 0.25rem;
+          --spacing-sm: 0.5rem;
+          --spacing-md: 1rem;
+          --spacing-lg: 1.5rem;
+          --spacing-xl: 2rem;
+          --spacing-2xl: 3rem;
+          
+          /* Shadows */
+          --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+          
+          /* Radius */
+          --radius-sm: 0.375rem;
+          --radius-md: 0.5rem;
+          --radius-lg: 0.75rem;
+          --radius-xl: 1rem;
+          --radius-full: 9999px;
+        }
+
+        /* Typography Consistency */
+        body {
+          font-family: var(--font-family);
+          color: var(--text-primary);
+          background-color: var(--background);
+        }
+
+        h1 {
+          font-size: var(--text-4xl);
+          font-weight: var(--font-bold);
+          line-height: var(--leading-tight);
+          color: var(--text-primary);
+        }
+
+        h2 {
+          font-size: var(--text-3xl);
+          font-weight: var(--font-bold);
+          line-height: var(--leading-tight);
+          color: var(--text-primary);
+        }
+
+        h3 {
+          font-size: var(--text-xl);
+          font-weight: var(--font-semibold);
+          line-height: var(--leading-normal);
+          color: var(--text-primary);
+        }
+
+        h4, h5, h6 {
+          font-size: var(--text-lg);
+          font-weight: var(--font-semibold);
+          line-height: var(--leading-normal);
+          color: var(--text-primary);
+        }
+
+        p {
+          font-size: var(--text-base);
+          line-height: var(--leading-normal);
+          color: var(--text-primary);
+        }
+
+        .text-sm {
+          font-size: var(--text-sm);
+          color: var(--text-secondary);
+        }
+
+        .text-xs {
+          font-size: var(--text-xs);
+          color: var(--text-muted);
         }
       `}</style>
       
