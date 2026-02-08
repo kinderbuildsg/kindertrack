@@ -55,19 +55,20 @@ export default function SiteEvaluation({ project, onUpdate }) {
         ? `${formData.site_evaluation_date}T${formData.site_evaluation_time}:00`
         : null;
 
-      await base44.entities.Project.update(project.id, {
+      const result = await base44.entities.Project.update(project.id, {
         site_evaluation_date: dateTime,
         site_evaluation_location: formData.site_evaluation_location,
         site_evaluation_notes: formData.site_evaluation_notes,
         site_evaluation_images: uploadedUrls
       });
 
-      onUpdate();
+      console.log('Site evaluation saved:', result);
       setIsEditing(false);
       setImageFiles([]);
+      onUpdate();
     } catch (error) {
-      console.error('Error saving:', error);
-      alert('Failed to save');
+      console.error('Error saving site evaluation:', error);
+      alert('Failed to save: ' + (error.message || 'Unknown error'));
     }
     setIsSaving(false);
   };

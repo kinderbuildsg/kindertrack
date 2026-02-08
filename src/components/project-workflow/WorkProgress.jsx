@@ -68,7 +68,7 @@ export default function WorkProgress({ project, onUpdate }) {
         uploadedUrls = uploads.map(u => u.file_url);
       }
 
-      await base44.entities.WorkProgress.create({
+      const result = await base44.entities.WorkProgress.create({
         project_id: project.id,
         date: formData.date,
         work_done: formData.work_done,
@@ -76,6 +76,8 @@ export default function WorkProgress({ project, onUpdate }) {
         remarks: formData.remarks,
         images: uploadedUrls
       });
+
+      console.log('Work progress saved:', result);
 
       setFormData({
         date: new Date().toISOString().split('T')[0],
@@ -86,10 +88,10 @@ export default function WorkProgress({ project, onUpdate }) {
       setImageFiles([]);
       setImagePreviews([]);
       setOpenDialog(false);
-      loadProgress();
+      await loadProgress();
     } catch (error) {
-      console.error('Error saving:', error);
-      alert('Failed to save progress');
+      console.error('Error saving work progress:', error);
+      alert('Failed to save progress: ' + (error.message || 'Unknown error'));
     }
     setIsSaving(false);
   };

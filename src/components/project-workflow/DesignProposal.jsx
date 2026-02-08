@@ -81,6 +81,16 @@ export default function DesignProposal({ project, onUpdate }) {
         uploadedUrls = [...uploadedUrls, ...uploads.map(u => u.file_url)];
       }
 
+      // Upload new PDFs if any
+      for (const [proposalId, file] of Object.entries(newPdfFiles)) {
+        if (file) {
+          const upload = await base44.integrations.Core.UploadFile({ file });
+          const updated = [...proposalPdfs];
+          updated[proposalId - 1] = { ...updated[proposalId - 1], url: upload.file_url };
+          setProposalPdfs(updated);
+        }
+      }
+
       const updateData = {
         polycam_3d_scan_link: formData.polycam_3d_scan_link,
         client_requirements: formData.client_requirements,
@@ -91,15 +101,16 @@ export default function DesignProposal({ project, onUpdate }) {
         proposal_quote_3: proposalPdfs[2]?.url || ''
       };
 
-      await base44.entities.Project.update(project.id, updateData);
+      const result = await base44.entities.Project.update(project.id, updateData);
+      console.log('Design proposal saved:', result);
 
-      onUpdate();
       setIsEditing(false);
       setImageFiles([]);
       setNewPdfFiles({});
+      onUpdate();
     } catch (error) {
-      console.error('Error saving:', error);
-      alert('Failed to save');
+      console.error('Error saving design proposal:', error);
+      alert('Failed to save: ' + (error.message || 'Unknown error'));
     }
     setIsSaving(false);
   };
