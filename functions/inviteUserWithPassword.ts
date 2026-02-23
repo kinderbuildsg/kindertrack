@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
         }
 
         // Register user directly with password (no invite email needed)
-        await base44.asServiceRole.auth.register({
+        await base44.auth.register({
             email,
             password: temporary_password,
             full_name
