@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-
 const ProcurementItem = base44.entities.ProcurementItem;
 const Project = base44.entities.Project;
 const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
@@ -74,7 +73,8 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   const loadUser = async () => {
     try {
-      const currentUser = await base44.auth.me();
+      const { auth } = await import("@/api/base44Client");
+      const currentUser = await auth.me();
       setUser(currentUser);
     } catch (error) {
       console.error("Error loading user:", error);

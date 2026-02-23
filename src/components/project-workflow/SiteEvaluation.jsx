@@ -85,7 +85,7 @@ export default function SiteEvaluation({ project, onUpdate }) {
       const startDate = new Date(startDateTime);
       const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
 
-      const { createCalendarEvent } = await import('@/functions/createCalendarEvent');
+      const { createCalendarEvent } = await import("@/functions/createCalendarEvent");
       const result = await createCalendarEvent({
         project_id: project.id,
         summary: `Site Evaluation - ${project.client_name}`,
