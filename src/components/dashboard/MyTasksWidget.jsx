@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-const Task = base44.entities.Task;
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format, isAfter } from "date-fns";
@@ -21,7 +20,7 @@ export default function MyTasksWidget({ tasks, projects, user, isLoading, onUpda
 
   const handleToggleTask = async (task) => {
     try {
-      await Task.update(task.id, {
+      await base44.entities.Task.update(task.id, {
         completed: !task.completed,
         completed_date: !task.completed ? new Date().toISOString() : null
       });

@@ -45,9 +45,13 @@ export default function ChangePassword() {
 
     setLoading(true);
     try {
+      // Change the actual password
+      await base44.auth.changePassword(currentPassword || user.temporary_password, newPassword);
+
       // Update user record to remove temporary password flag
       await base44.auth.updateMe({
         must_change_password: false,
+        temporary_password: null,
         password_changed_date: new Date().toISOString()
       });
 
