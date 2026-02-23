@@ -153,19 +153,11 @@ Kinderbuild Projects Team`
       await inviteUserWithPassword({
         email: inviteEmail,
         full_name: inviteName,
-        role: inviteRole,
+        role: "user",
+        job_role: inviteRole,
         temporary_password: invitePassword
       });
 
-      // Approve the user immediately since admin created them
-      const newUsers = await base44.entities.User.filter({ email: inviteEmail });
-      if (newUsers.length > 0) {
-        await base44.entities.User.update(newUsers[0].id, {
-          approval_status: "approved",
-          approved_by: currentUser.email,
-          approved_date: new Date().toISOString()
-        });
-      }
       toast.success(`User created and credentials sent to ${inviteEmail}`);
       setInviteEmail("");
       setInviteName("");
