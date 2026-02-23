@@ -48,11 +48,12 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Send email with credentials
-        await base44.asServiceRole.integrations.Core.SendEmail({
-            to: email,
-            subject: 'Your Kinderbuild Projects Account',
-            body: `Hello ${full_name},
+        // Send email with credentials (non-blocking)
+        try {
+            await base44.asServiceRole.integrations.Core.SendEmail({
+                to: email,
+                subject: 'Your Kinderbuild Projects Account',
+                body: `Hello ${full_name},
 
 Your Kinderbuild Projects account has been created by an administrator.
 
@@ -66,11 +67,14 @@ If you have any questions, please contact your administrator.
 
 Best regards,
 Kinderbuild Projects Team`
-        });
+            });
+        } catch (emailError) {
+            console.warn('Email sending failed (non-critical):', emailError.message);
+        }
 
         return Response.json({ 
             success: true, 
-            message: 'User created and credentials sent',
+            message: 'User created successfully. Credentials sent to email if available.',
             email 
         });
     } catch (error) {
