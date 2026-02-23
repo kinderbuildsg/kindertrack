@@ -9,52 +9,58 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        const { email, full_name, role, temporary_password } = await req.json();
+        const { email, full_name, role, job_role, temporary_password } = await req.json();
 
-        if (!email || !full_name || !role || !temporary_password) {
+        if (!email || !full_name || !temporary_password) {
             return Response.json({ 
-                error: 'Missing required fields: email, full_name, role, temporary_password' 
+                error: 'Missing required fields: email, full_name, temporary_password' 
             }, { status: 400 });
         }
 
-        // Invite user through Base44
-        await base44.asServiceRole.users.inviteUser(email, role);
-
-        // Wait a moment for user to be created
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Find the newly created user
-        const users = await base44.asServiceRole.entities.User.filter({ email });
-        if (users.length === 0) {
+        if (temporary_password.length < 8) {
             return Response.json({ 
-                error: 'User invited but not found in database' 
-            }, { status: 500 });
+                error: 'Password must be at least 8 characters' 
+            }, { status: 400 });
         }
 
-        const newUser = users[0];
-
-        // Update with temporary password and name
-        await base44.asServiceRole.entities.User.update(newUser.id, {
-            temporary_password,
-            must_change_password: true,
+        // Register user directly with password (no invite email needed)
+        await base44.asServiceRole.auth.register({
+            email,
+            password: temporary_password,
             full_name
         });
 
-        // Send email with temporary credentials
+        // Wait for user to be created in DB
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Find the newly created user and update their profile
+        const users = await base44.asServiceRole.entities.User.filter({ email });
+        if (users.length > 0) {
+            const newUser = users[0];
+            await base44.asServiceRole.entities.User.update(newUser.id, {
+                full_name,
+                role: role || 'user',
+                job_role: job_role || role || 'user',
+                approval_status: 'approved',
+                approved_by: user.email,
+                approved_date: new Date().toISOString(),
+                must_change_password: true
+            });
+        }
+
+        // Send email with credentials
         await base44.asServiceRole.integrations.Core.SendEmail({
             to: email,
             subject: 'Your Kinderbuild Projects Account',
             body: `Hello ${full_name},
 
-Your Kinderbuild Projects account has been created!
+Your Kinderbuild Projects account has been created by an administrator.
 
 Login Credentials:
 Email: ${email}
-Temporary Password: ${temporary_password}
+Password: ${temporary_password}
 
-IMPORTANT: You must change this password upon first login.
-
-You will receive a separate email to set up your account. Please use the temporary password above when you first log in, then you'll be prompted to create a new secure password.
+Please log in and change your password immediately.
 
 If you have any questions, please contact your administrator.
 
@@ -64,11 +70,11 @@ Kinderbuild Projects Team`
 
         return Response.json({ 
             success: true, 
-            message: 'User invited and credentials sent',
+            message: 'User created and credentials sent',
             email 
         });
     } catch (error) {
-        console.error('Error inviting user:', error);
+        console.error('Error creating user:', error);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
