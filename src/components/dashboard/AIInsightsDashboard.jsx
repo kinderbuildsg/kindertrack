@@ -21,20 +21,19 @@ export default function AIInsightsDashboard({ user }) {
   const loadInsights = async () => {
     setIsLoading(true);
     try {
-      const [risksData, forecastData] = await Promise.all([
+      const [risksResult, forecastResult] = await Promise.allSettled([
         base44.functions.invoke('detectProjectRisks', {}),
         base44.functions.invoke('forecastRevenue', {})
       ]);
 
-      if (risksData.data?.risks) {
-        setRisks(risksData.data.risks);
+      if (risksResult.status === 'fulfilled' && risksResult.value?.data?.risks) {
+        setRisks(risksResult.value.data.risks);
       }
-      if (forecastData.data?.forecast) {
-        setForecast(forecastData.data);
+      if (forecastResult.status === 'fulfilled' && forecastResult.value?.data?.forecast) {
+        setForecast(forecastResult.value.data);
       }
     } catch (error) {
       console.error("Error loading AI insights:", error);
-      toast.error("Failed to load AI insights");
     }
     setIsLoading(false);
   };
