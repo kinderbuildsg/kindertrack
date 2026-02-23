@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-const ProcurementItem = base44.entities.ProcurementItem;
-const Project = base44.entities.Project;
-const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
-const InvokeLLM = (params) => base44.integrations.Core.InvokeLLM(params);
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
