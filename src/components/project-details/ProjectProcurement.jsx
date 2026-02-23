@@ -20,7 +20,7 @@ const CurrencyConverter = ({ value, fromCurrency }) => {
     setIsLoading(true);
     setConvertedValue(null);
     try {
-      const rateString = await InvokeLLM({
+      const rateString = await base44.integrations.Core.InvokeLLM({
         prompt: `What is the current exchange rate from ${fromCurrency} to SGD? Please provide only the number.`,
         add_context_from_internet: true
       });
@@ -117,7 +117,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   const handleSaveLinks = async () => {
     setIsSavingLinks(true);
     try {
-        await Project.update(project.id, {
+        await base44.entities.Project.update(project.id, {
             proposal_1_link: proposalLinks[1],
             proposal_2_link: proposalLinks[2],
             proposal_3_link: proposalLinks[3],
@@ -149,14 +149,14 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
     try {
       if (imageFile) {
-        const { file_url } = await UploadFile({ file: imageFile });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: imageFile });
         updatedFormData.image_url = file_url;
       }
 
       if (isEditing) {
-        await ProcurementItem.update(isEditing.id, updatedFormData);
+        await base44.entities.ProcurementItem.update(isEditing.id, updatedFormData);
       } else {
-        await ProcurementItem.create(updatedFormData);
+        await base44.entities.ProcurementItem.create(updatedFormData);
       }
 
       onUpdate();
@@ -170,7 +170,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   const handleDelete = async (itemId) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
-      await ProcurementItem.delete(itemId);
+      await base44.entities.ProcurementItem.delete(itemId);
       onUpdate();
     }
   };
