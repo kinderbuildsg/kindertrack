@@ -107,16 +107,18 @@ export default function Layout({ children, currentPageName }) {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      // Check approval status
-      if (currentUser.approval_status === "pending" && location.pathname !== createPageUrl("PendingApproval")) {
-        window.location.href = createPageUrl("PendingApproval");
-        return;
-      }
-      
-      if (currentUser.approval_status === "rejected") {
-        alert("Your account has been rejected. Please contact an administrator.");
-        await base44.auth.logout();
-        return;
+      // Check approval status (skip for admins)
+      if (currentUser.role !== 'admin') {
+        if (currentUser.approval_status === "pending" && location.pathname !== createPageUrl("PendingApproval")) {
+          window.location.href = createPageUrl("PendingApproval");
+          return;
+        }
+        
+        if (currentUser.approval_status === "rejected") {
+          alert("Your account has been rejected. Please contact an administrator.");
+          await base44.auth.logout();
+          return;
+        }
       }
       
       // Check if user needs to change password
