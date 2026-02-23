@@ -373,11 +373,11 @@ export default function DealClosed({ project, onUpdate }) {
                           term.received 
                             ? 'bg-green-600 border-green-600' 
                             : paymentStatus.status === 'overdue'
-                            ? 'bg-red-600 border-red-600'
+                            ? 'border-red-400 bg-red-50'
                             : 'border-gray-300'
                         }`}>
                           {term.received && <Check className="w-4 h-4 text-white" />}
-                          {!term.received && paymentStatus.status === 'overdue' && <AlertCircle className="w-4 h-4 text-red-600" />}
+                          {!term.received && paymentStatus.status === 'overdue' && <AlertCircle className="w-3 h-3 text-red-500" />}
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">{term.label}</p>

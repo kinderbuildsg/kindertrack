@@ -43,16 +43,10 @@ export default function ChangePassword() {
       return;
     }
 
-    if (user.temporary_password && currentPassword !== user.temporary_password) {
-      setError("Current password is incorrect");
-      return;
-    }
-
     setLoading(true);
     try {
       // Update user record to remove temporary password flag
       await base44.auth.updateMe({
-        temporary_password: null,
         must_change_password: false,
         password_changed_date: new Date().toISOString()
       });
@@ -103,7 +97,7 @@ export default function ChangePassword() {
               </Alert>
             )}
 
-            {user.temporary_password && (
+            {user.must_change_password && (
               <div className="space-y-2">
                 <Label>Current (Temporary) Password</Label>
                 <Input

@@ -1,36 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+
+const ProcurementItem = base44.entities.ProcurementItem;
+const Project = base44.entities.Project;
+const UploadFile = (params) => base44.integrations.Core.UploadFile(params);
+const InvokeLLM = (params) => base44.integrations.Core.InvokeLLM(params);
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit, Loader2, Image, RefreshCw, X } from "lucide-react";
-import SupplierInvoiceTracker from "../procurement/SupplierInvoiceTracker";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Plus, Trash2, Edit, Loader2, Image, RefreshCw, X, Link as LinkIcon, Save, ExternalLink } from "lucide-react";
 
 // Currency Converter Component
-const CurrencyConverter = ({ value, fromCurrency, onConverted }) => {
+const CurrencyConverter = ({ value, fromCurrency }) => {
   const [convertedValue, setConvertedValue] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const convertCurrency = async () => {
     if (fromCurrency === 'SGD') return;
     setIsLoading(true);
+    setConvertedValue(null);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
+      const rateString = await InvokeLLM({
         prompt: `What is the current exchange rate from ${fromCurrency} to SGD? Please provide only the number.`,
         add_context_from_internet: true
       });
-      const rate = parseFloat(result);
+      const rate = parseFloat(rateString);
       if (!isNaN(rate)) {
-        const converted = parseFloat((value * rate).toFixed(2));
-        setConvertedValue(converted);
-        onConverted?.(converted);
+        setConvertedValue((value * rate).toFixed(2));
+      } else {
+        setConvertedValue('Error');
       }
     } catch (e) {
       console.error(e);
+      setConvertedValue('Error');
     }
     setIsLoading(false);
   };
@@ -38,27 +45,31 @@ const CurrencyConverter = ({ value, fromCurrency, onConverted }) => {
   if (fromCurrency === 'SGD') return null;
 
   return (
-    <Button variant="ghost" size="sm" onClick={convertCurrency} disabled={isLoading} className="h-auto p-1 text-xs text-sky-600">
-      {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-      {convertedValue && <span className="ml-1">≈ S${convertedValue}</span>}
-    </Button>
-  );
+    <div className="flex items-center gap-2 mt-1">
+      <Button variant="ghost" size="sm" onClick={convertCurrency} disabled={isLoading} className="h-auto p-1 text-xs text-sky-600 hover:text-sky-800">
+        {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+      </Button>
+      {convertedValue && <span className="text-xs text-gray-600">~ S$ {convertedValue}</span>}
+    </div>);
+
 };
 
-export default function ProjectProcurement({ project, onUpdate }) {
-  const [items, setItems] = useState([]);
+// Main Procurement Component
+export default function ProjectProcurement({ project, items, onUpdate }) {
   const [openDialog, setOpenDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(null);
-  const [itemType, setItemType] = useState(null);
   const [formData, setFormData] = useState({});
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("proposal1");
+  const [proposalLinks, setProposalLinks] = useState({ 1: '', 2: '', 3: '' });
+  const [isSavingLinks, setIsSavingLinks] = useState(false);
   const [user, setUser] = useState(null);
+  const [viewMode, setViewMode] = useState("client");
 
   useEffect(() => {
     loadUser();
-    loadItems();
   }, []);
 
   const loadUser = async () => {
@@ -70,36 +81,58 @@ export default function ProjectProcurement({ project, onUpdate }) {
     }
   };
 
-  const loadItems = async () => {
-    try {
-      const fetchedItems = await base44.entities.ProcurementItem.filter({ project_id: project.id });
-      setItems(fetchedItems);
-    } catch (error) {
-      console.error("Error loading items:", error);
+  useEffect(() => {
+    if (isEditing) {
+      setFormData({ ...isEditing });
+      setImagePreview(isEditing.image_url);
+      // When editing an item, set the active tab to its proposal number
+      setActiveTab(`proposal${isEditing.proposal_number}`);
+    } else {
+      resetForm();
     }
-  };
+    
+    setProposalLinks({
+        1: project.proposal_1_link || '',
+        2: project.proposal_2_link || '',
+        3: project.proposal_3_link || '',
+    });
+  }, [isEditing, project]);
 
-  const resetForm = () => {
-    setFormData({});
+  const resetForm = (proposalNumber = 1) => {
+    setFormData({
+      project_id: project.id,
+      proposal_number: proposalNumber,
+      item_name: "",
+      supplier_price: "",
+      supplier_currency: "USD",
+      selling_price: "",
+      notes: "",
+      image_url: "",
+      is_confirmed: false
+    });
     setImageFile(null);
     setImagePreview(null);
     setIsEditing(null);
-    setItemType(null);
   };
 
-  const openAddDialog = (type) => {
-    resetForm();
-    setItemType(type);
-    if (type === 'playground') {
-      setFormData({ item_type: 'playground', supplier_currency: 'USD' });
-    } else if (type === 'fitness') {
-      setFormData({ item_type: 'fitness', supplier_currency: 'RMB' });
-    } else if (type === 'epdm') {
-      setFormData({ item_type: 'epdm', area_sqm: '', cost_per_sqm: 47, selling_price_per_sqm: '' });
-    } else if (type === 'misc') {
-      setFormData({ item_type: 'misc', supplier_currency: 'SGD' });
+  const handleLinkChange = (proposalNumber, value) => {
+    setProposalLinks(prev => ({ ...prev, [proposalNumber]: value }));
+  };
+
+  const handleSaveLinks = async () => {
+    setIsSavingLinks(true);
+    try {
+        await Project.update(project.id, {
+            proposal_1_link: proposalLinks[1],
+            proposal_2_link: proposalLinks[2],
+            proposal_3_link: proposalLinks[3],
+        });
+        onUpdate(); 
+    } catch (error) {
+        console.error("Error saving proposal links:", error);
+        alert("Failed to save links.");
     }
-    setOpenDialog(true);
+    setIsSavingLinks(false);
   };
 
   const handleFileChange = (e) => {
@@ -113,108 +146,221 @@ export default function ProjectProcurement({ project, onUpdate }) {
 
   const handleSave = async () => {
     setIsSaving(true);
-    try {
-      let uploadedImageUrl = formData.image_url;
-      if (imageFile) {
-        const upload = await base44.integrations.Core.UploadFile({ file: imageFile });
-        uploadedImageUrl = upload.file_url;
-      }
+    let updatedFormData = { ...formData };
 
-      const dataToSave = {
-        ...formData,
-        project_id: project.id,
-        image_url: uploadedImageUrl,
-        proposal_number: formData.item_type === 'playground' ? 1 : formData.item_type === 'fitness' ? 1 : 2
-      };
+    // Convert to numbers
+    updatedFormData.supplier_price = parseFloat(updatedFormData.supplier_price) || 0;
+    updatedFormData.selling_price = parseFloat(updatedFormData.selling_price) || 0;
+
+    try {
+      if (imageFile) {
+        const { file_url } = await UploadFile({ file: imageFile });
+        updatedFormData.image_url = file_url;
+      }
 
       if (isEditing) {
-        await base44.entities.ProcurementItem.update(isEditing.id, dataToSave);
+        await ProcurementItem.update(isEditing.id, updatedFormData);
       } else {
-        await base44.entities.ProcurementItem.create(dataToSave);
+        await ProcurementItem.create(updatedFormData);
       }
 
+      onUpdate();
       setOpenDialog(false);
       resetForm();
-      loadItems();
-      onUpdate?.();
     } catch (error) {
       console.error("Error saving item:", error);
-      alert("Failed to save item");
     }
     setIsSaving(false);
   };
 
   const handleDelete = async (itemId) => {
-    if (window.confirm("Delete this item?")) {
-      await base44.entities.ProcurementItem.delete(itemId);
-      loadItems();
-      onUpdate?.();
+    if (window.confirm("Are you sure you want to delete this item?")) {
+      await ProcurementItem.delete(itemId);
+      onUpdate();
     }
   };
 
-  const handleEdit = (item) => {
-    setIsEditing(item);
-    setItemType(item.item_type);
-    setFormData(item);
-    setImagePreview(item.image_url);
-    setOpenDialog(true);
+  const canViewSupplierPrices = () => {
+    return user?.role === 'admin' || user?.job_role === 'director' || user?.job_role === 'designer';
   };
 
-  const playgroundItems = items.filter(i => i.item_type === 'playground');
-  const fitnessItems = items.filter(i => i.item_type === 'fitness');
-  const epdmItems = items.filter(i => i.item_type === 'epdm');
-  const miscItems = items.filter(i => i.item_type === 'misc');
+  const renderProposal = (proposalNumber) => {
+    const proposalItems = items.filter((i) => i.proposal_number === proposalNumber);
+    const totalSupplierCost = proposalItems.reduce((sum, i) => {
+      // Simple sum, conversion is display-only
+      if (i.supplier_currency === 'SGD') return sum + (i.supplier_price || 0);
+      return sum; // For now, only summing SGD prices for accuracy.
+    }, 0);
+    const totalSellingPrice = proposalItems.reduce((sum, i) => sum + (i.selling_price || 0), 0);
+    const profit = totalSellingPrice - totalSupplierCost;
+    const margin = totalSellingPrice > 0 ? profit / totalSellingPrice * 100 : 0;
 
-  const calculatePlaygroundCost = (item) => {
-    if (item.supplier_currency === 'SGD') return item.supplier_price || 0;
-    return (item.supplier_price || 0) * (item.converted_sgd || 1);
+    const proposalLink = proposalNumber === 1 ? project.proposal_quote_1 : proposalNumber === 2 ? project.proposal_quote_2 : project.proposal_quote_3;
+
+    return (
+      <div className="space-y-4">
+        {proposalLink && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Proposal {proposalNumber} Design</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(proposalLink, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View Design Document
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {proposalItems.map((item) =>
+          <Card key={item.id} className={`flex flex-col ${item.is_confirmed ? 'border-2 border-green-500 bg-green-50' : ''}`}>
+              <CardContent className="pt-4 flex-grow">
+                {item.image_url ?
+              <img src={item.image_url} alt={item.item_name} className="w-full h-32 object-cover rounded-md mb-3" /> :
+
+              <div className="w-full h-32 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
+                    <Image className="w-8 h-8 text-gray-400" />
+                  </div>
+              }
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-bold">{item.item_name}</h4>
+                  {item.is_confirmed && <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">✓ Confirmed</span>}
+                </div>
+                <p className="text-sm text-gray-500">{item.notes}</p>
+              </CardContent>
+              <CardFooter className="flex-col items-start text-sm pt-4 border-t">
+                {canViewSupplierPrices() && (
+                  <>
+                    <div className="w-full flex justify-between">
+                        <span>Supplier:</span>
+                        <span className="font-semibold">
+                            ${item.supplier_price?.toLocaleString()} {item.supplier_currency}
+                        </span>
+                    </div>
+                    <CurrencyConverter value={item.supplier_price} fromCurrency={item.supplier_currency} />
+                  </>
+                )}
+                 <div className="w-full flex justify-between mt-2">
+                    <span>Selling:</span>
+                    <span className="font-semibold text-green-600">
+                        S${item.selling_price?.toLocaleString()}
+                    </span>
+                </div>
+                {canViewSupplierPrices() && (
+                  <div className="flex gap-2 mt-4 w-full">
+                      <Button 
+                        variant={item.is_confirmed ? "secondary" : "default"} 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={async () => {
+                          await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                          onUpdate();
+                        }}
+                      >
+                        {item.is_confirmed ? 'Unconfirm' : 'Confirm'}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => {setIsEditing(item);setOpenDialog(true);}}>
+                          <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="w-8 h-8 text-red-500 hover:text-red-700" onClick={() => handleDelete(item.id)}>
+                          <Trash2 className="w-4 h-4" />
+                      </Button>
+                  </div>
+                )}
+              </CardFooter>
+            </Card>
+          )}
+        </div>
+        
+        {proposalItems.length === 0 &&
+        <p className="text-center py-8 text-gray-500">No items added to this proposal yet.</p>
+        }
+
+        {canViewSupplierPrices() && (
+          <Card className="mt-6 bg-gray-50">
+              <CardHeader>
+                  <CardTitle className="text-lg">Proposal {proposalNumber} Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                      <p className="text-sm text-gray-500">Total Supplier Cost (SGD)</p>
+                      <p className="text-xl font-bold">S$ {totalSupplierCost.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">Note: Only SGD prices are summed up.</p>
+                  </div>
+                   <div>
+                      <p className="text-sm text-gray-500">Total Selling Price</p>
+                      <p className="text-xl font-bold text-green-600">S$ {totalSellingPrice.toLocaleString()}</p>
+                  </div>
+                   <div>
+                      <p className="text-sm text-gray-500">Estimated Profit</p>
+                      <p className={`text-xl font-bold ${profit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>S$ {profit.toLocaleString()}</p>
+                  </div>
+                   <div>
+                      <p className="text-sm text-gray-500">Profit Margin</p>
+                      <p className="text-xl font-bold">{margin.toFixed(1)}%</p>
+                  </div>
+              </CardContent>
+          </Card>
+        )}
+      </div>);
+
   };
 
-  const calculateEpdmCost = (item) => {
-    return (item.area_sqm || 0) * (item.cost_per_sqm || 47);
+  const isAdmin = () => {
+    return user?.role === 'admin' || user?.job_role === 'director';
   };
-
-  const calculateEpdmSelling = (item) => {
-    return (item.area_sqm || 0) * (item.selling_price_per_sqm || 0);
-  };
-
-  const totalPlaygroundCost = playgroundItems.reduce((sum, item) => sum + calculatePlaygroundCost(item), 0);
-  const totalPlaygroundSelling = playgroundItems.reduce((sum, item) => sum + (item.selling_price || 0), 0);
-  const totalFitnessCost = fitnessItems.reduce((sum, item) => sum + calculatePlaygroundCost(item), 0);
-  const totalFitnessSelling = fitnessItems.reduce((sum, item) => sum + (item.selling_price || 0), 0);
-  const totalEpdmCost = epdmItems.reduce((sum, item) => sum + calculateEpdmCost(item), 0);
-  const totalEpdmSelling = epdmItems.reduce((sum, item) => sum + calculateEpdmSelling(item), 0);
-  const totalMiscCost = miscItems.reduce((sum, item) => sum + (item.supplier_price || 0), 0);
-  const totalMiscSelling = miscItems.reduce((sum, item) => sum + (item.selling_price || 0), 0);
-
-  const grandTotalCost = totalPlaygroundCost + totalFitnessCost + totalEpdmCost + totalMiscCost;
-  const grandTotalSelling = totalPlaygroundSelling + totalFitnessSelling + totalEpdmSelling + totalMiscSelling;
 
   return (
-    <div className="space-y-6">
-      {/* Invoice Tracker */}
-      <SupplierInvoiceTracker project={project} onUpdate={onUpdate} />
+    <>
+      {isAdmin() && (
+        <div className="mb-6 flex gap-2">
+          <Button 
+            variant={viewMode === "client" ? "default" : "outline"}
+            onClick={() => setViewMode("client")}
+          >
+            Client View
+          </Button>
+          <Button 
+            variant={viewMode === "admin" ? "default" : "outline"}
+            onClick={() => setViewMode("admin")}
+          >
+            Admin Management
+          </Button>
+        </div>
+      )}
 
-      {/* Playground Set Section */}
-      <Card>
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100">
-          <CardTitle className="flex items-center justify-between">
-            <span>🎪 Playground Set</span>
-            <Button size="sm" onClick={() => openAddDialog('playground')}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {playgroundItems.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No playground items added yet</p>
-          ) : (
-            <div className="space-y-4">
-              {playgroundItems.map(item => (
-                <Card key={item.id} className="border-l-4 border-l-purple-500">
+      {viewMode === "admin" && isAdmin() ? (
+        <Card className="mb-6 shadow-lg border-2 border-red-200 bg-red-50">
+          <CardHeader className="bg-red-100">
+            <CardTitle className="flex items-center gap-2 text-red-800">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Admin-Only Procurement Management
+            </CardTitle>
+            <p className="text-sm text-red-700">Manage supplier prices, product details, and inventory across all proposals</p>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">All Products</h3>
+              <Button onClick={() => { resetForm(1); setOpenDialog(true); }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Product
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {items.map((item) => (
+                <Card key={item.id} className={`${item.is_confirmed ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-gray-300'}`}>
                   <CardContent className="pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                       <div className="flex items-center gap-3">
                         {item.image_url ? (
                           <img src={item.image_url} alt={item.item_name} className="w-16 h-16 object-cover rounded" />
@@ -225,25 +371,46 @@ export default function ProjectProcurement({ project, onUpdate }) {
                         )}
                         <div>
                           <p className="font-semibold">{item.item_name}</p>
-                          <p className="text-xs text-gray-500">{item.notes}</p>
+                          <p className="text-xs text-gray-500">Proposal {item.proposal_number}</p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500">Cost Price</p>
-                        <p className="font-semibold">S${calculatePlaygroundCost(item).toLocaleString()}</p>
-                        {item.supplier_currency !== 'SGD' && (
-                          <p className="text-xs text-gray-400">${item.supplier_price} {item.supplier_currency}</p>
-                        )}
+                        <Label className="text-xs text-gray-500">Supplier Price</Label>
+                        <p className="font-semibold text-blue-600">${item.supplier_price?.toLocaleString()} {item.supplier_currency}</p>
+                        <CurrencyConverter value={item.supplier_price} fromCurrency={item.supplier_currency} />
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500">Selling Price</p>
-                        <p className="font-semibold text-green-600">S${(item.selling_price || 0).toLocaleString()}</p>
+                        <Label className="text-xs text-gray-500">Selling Price</Label>
+                        <p className="font-semibold text-green-600">S${item.selling_price?.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">Notes</Label>
+                        <p className="text-sm text-gray-700">{item.notes || 'No notes'}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item)}>
+                        <Button 
+                          size="sm"
+                          variant={item.is_confirmed ? "secondary" : "default"}
+                          onClick={async () => {
+                            await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                            onUpdate();
+                          }}
+                        >
+                          {item.is_confirmed ? '✓ Confirmed' : 'Confirm'}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => { setIsEditing(item); setOpenDialog(true); }}
+                        >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(item.id)}>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="text-red-500"
+                          onClick={() => handleDelete(item.id)}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -251,395 +418,156 @@ export default function ProjectProcurement({ project, onUpdate }) {
                   </CardContent>
                 </Card>
               ))}
-              <Card className="bg-purple-50">
-                <CardContent className="pt-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-xs text-gray-500">Total Cost</p>
-                      <p className="text-lg font-bold text-purple-700">S${totalPlaygroundCost.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Total Selling</p>
-                      <p className="text-lg font-bold text-green-600">S${totalPlaygroundSelling.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Profit</p>
-                      <p className="text-lg font-bold text-blue-600">S${(totalPlaygroundSelling - totalPlaygroundCost).toLocaleString()}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Fitness Equipment Section */}
-      <Card>
-        <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100">
-          <CardTitle className="flex items-center justify-between">
-            <span>💪 Fitness Equipment</span>
-            <Button size="sm" onClick={() => openAddDialog('fitness')}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {fitnessItems.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No fitness items added yet</p>
-          ) : (
-            <div className="space-y-4">
-              {fitnessItems.map(item => (
-                <Card key={item.id} className="border-l-4 border-l-orange-500">
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-3">
-                        {item.image_url ? (
-                          <img src={item.image_url} alt={item.item_name} className="w-16 h-16 object-cover rounded" />
-                        ) : (
-                          <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                            <Image className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold">{item.item_name}</p>
-                          <p className="text-xs text-gray-500">{item.notes}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Cost Price</p>
-                        <p className="font-semibold">S${calculatePlaygroundCost(item).toLocaleString()}</p>
-                        {item.supplier_currency !== 'SGD' && (
-                          <p className="text-xs text-gray-400">¥{item.supplier_price} {item.supplier_currency}</p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Selling Price</p>
-                        <p className="font-semibold text-green-600">S${(item.selling_price || 0).toLocaleString()}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              <Card className="bg-orange-50">
-                <CardContent className="pt-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-xs text-gray-500">Total Cost</p>
-                      <p className="text-lg font-bold text-orange-700">S${totalFitnessCost.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Total Selling</p>
-                      <p className="text-lg font-bold text-green-600">S${totalFitnessSelling.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Profit</p>
-                      <p className="text-lg font-bold text-blue-600">S${(totalFitnessSelling - totalFitnessCost).toLocaleString()}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* EPDM Flooring Section */}
-      <Card>
-        <CardHeader className="bg-gradient-to-r from-red-50 to-red-100">
-          <CardTitle className="flex items-center justify-between">
-            <span>🏃 EPDM Flooring</span>
-            <Button size="sm" onClick={() => openAddDialog('epdm')}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Area
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {epdmItems.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No EPDM areas added yet</p>
-          ) : (
-            <div className="space-y-4">
-              {epdmItems.map(item => (
-                <Card key={item.id} className="border-l-4 border-l-red-500">
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="font-semibold">{item.item_name}</p>
-                        <p className="text-sm text-gray-600">{item.area_sqm} m²</p>
-                        <p className="text-xs text-gray-500">{item.notes}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Cost (${item.cost_per_sqm}/m²)</p>
-                        <p className="font-semibold">S${calculateEpdmCost(item).toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Selling (${item.selling_price_per_sqm}/m²)</p>
-                        <p className="font-semibold text-green-600">S${calculateEpdmSelling(item).toLocaleString()}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              <Card className="bg-red-50">
-                <CardContent className="pt-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-xs text-gray-500">Total Cost</p>
-                      <p className="text-lg font-bold text-red-700">S${totalEpdmCost.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Total Selling</p>
-                      <p className="text-lg font-bold text-green-600">S${totalEpdmSelling.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Profit</p>
-                      <p className="text-lg font-bold text-blue-600">S${(totalEpdmSelling - totalEpdmCost).toLocaleString()}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Miscellaneous Costing */}
-      <Card>
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
-          <CardTitle className="flex items-center justify-between">
-            <span>📋 Miscellaneous Costing</span>
-            <Button size="sm" onClick={() => openAddDialog('misc')}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {miscItems.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No miscellaneous items added yet</p>
-          ) : (
-            <div className="space-y-4">
-              {miscItems.map(item => (
-                <Card key={item.id} className="border-l-4 border-l-slate-500">
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="font-semibold">{item.item_name}</p>
-                        <p className="text-xs text-gray-500">{item.notes}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Cost Price</p>
-                        <p className="font-semibold">S${(item.supplier_price || 0).toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Selling Price</p>
-                        <p className="font-semibold text-green-600">S${(item.selling_price || 0).toLocaleString()}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(item)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {miscItems.length > 0 && (
-                <Card className="bg-slate-50">
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <p className="text-xs text-gray-500">Total Cost</p>
-                        <p className="text-lg font-bold text-slate-700">S${totalMiscCost.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Total Selling</p>
-                        <p className="text-lg font-bold text-green-600">S${totalMiscSelling.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Profit</p>
-                        <p className="text-lg font-bold text-blue-600">S${(totalMiscSelling - totalMiscCost).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {items.length === 0 && (
+                <p className="text-center py-8 text-gray-500">No products added yet</p>
               )}
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Grand Total */}
-      <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-3 gap-6 text-center">
-            <div>
-              <p className="text-sm opacity-80">Total Cost Price</p>
-              <p className="text-3xl font-bold">S${grandTotalCost.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">Total Selling Price</p>
-              <p className="text-3xl font-bold text-green-400">S${grandTotalSelling.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-sm opacity-80">Total Profit</p>
-              <p className="text-3xl font-bold text-blue-300">S${(grandTotalSelling - grandTotalCost).toLocaleString()}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Add/Edit Dialog */}
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-2xl bg-white">
-          <DialogHeader>
-            <DialogTitle>
-              {isEditing ? 'Edit' : 'Add'} {itemType === 'playground' ? 'Playground Set' : itemType === 'fitness' ? 'Fitness Equipment' : itemType === 'epdm' ? 'EPDM Area' : 'Miscellaneous Item'}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {itemType === 'epdm' ? (
-              <>
-                <div className="space-y-2">
-                  <Label>Area Name</Label>
-                  <Input value={formData.item_name || ''} onChange={(e) => setFormData({ ...formData, item_name: e.target.value })} placeholder="e.g. Main Play Area" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Area (m²)</Label>
-                  <Input type="number" step="0.1" value={formData.area_sqm || ''} onChange={(e) => setFormData({ ...formData, area_sqm: parseFloat(e.target.value) })} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Cost Price ($/m²)</Label>
-                    <Input type="number" step="0.01" value={formData.cost_per_sqm || 47} onChange={(e) => setFormData({ ...formData, cost_per_sqm: parseFloat(e.target.value) })} />
-                    <p className="text-xs text-gray-500">Default: $47/m²</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Selling Price ($/m²)</Label>
-                    <Input type="number" step="0.01" value={formData.selling_price_per_sqm || ''} onChange={(e) => setFormData({ ...formData, selling_price_per_sqm: parseFloat(e.target.value) })} />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Textarea value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Additional details..." />
-                </div>
-              </>
-            ) : itemType === 'misc' ? (
-              <>
-                <div className="space-y-2">
-                  <Label>Item Name</Label>
-                  <Input value={formData.item_name || ''} onChange={(e) => setFormData({ ...formData, item_name: e.target.value })} placeholder="e.g. Installation, Labour, Permits" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Cost Price (SGD)</Label>
-                    <Input type="number" step="0.01" value={formData.supplier_price || ''} onChange={(e) => setFormData({ ...formData, supplier_price: parseFloat(e.target.value) })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Selling Price (SGD)</Label>
-                    <Input type="number" step="0.01" value={formData.selling_price || ''} onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) })} />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Textarea value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Description of miscellaneous cost..." />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label>Item Name</Label>
-                  <Input value={formData.item_name || ''} onChange={(e) => setFormData({ ...formData, item_name: e.target.value })} placeholder="e.g. Swing Set, Climbing Wall" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Upload Image</Label>
-                  <Input type="file" accept="image/*" onChange={handleFileChange} />
-                  {imagePreview && (
-                    <div className="relative w-32 h-32">
-                      <img src={imagePreview} alt="preview" className="w-full h-full object-cover rounded" />
-                      <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 w-6 h-6" onClick={() => { setImageFile(null); setImagePreview(null); }}>
-                        <X className="w-4 h-4" />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="mb-6 shadow-lg">
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="w-5 h-5 text-sky-500" />
+                  Proposal Links
+              </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              {[1, 2, 3].map(num => (
+                  <div key={num} className="flex items-center gap-2">
+                      <Label htmlFor={`proposal-link-${num}`} className="w-24 shrink-0">Proposal {num}</Label>
+                      <Input
+                          id={`proposal-link-${num}`}
+                          placeholder="Paste Google Drive link here..."
+                          value={proposalLinks[num] || ''}
+                          onChange={(e) => handleLinkChange(num, e.target.value)}
+                      />
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={!proposalLinks[num]}
+                          onClick={() => window.open(proposalLinks[num], '_blank')}
+                      >
+                          <ExternalLink className="w-4 h-4" />
                       </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Supplier Price</Label>
-                    <Input type="number" step="0.01" value={formData.supplier_price || ''} onChange={(e) => setFormData({ ...formData, supplier_price: parseFloat(e.target.value) })} />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Currency</Label>
-                    <Select value={formData.supplier_currency || 'USD'} onValueChange={(v) => setFormData({ ...formData, supplier_currency: v })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="RMB">RMB</SelectItem>
-                        <SelectItem value="SGD">SGD</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {formData.supplier_currency !== 'SGD' && (
-                  <CurrencyConverter value={formData.supplier_price} fromCurrency={formData.supplier_currency} onConverted={(v) => setFormData({ ...formData, converted_sgd: v })} />
-                )}
-
-                <div className="space-y-2">
-                  <Label>Selling Price (SGD)</Label>
-                  <Input type="number" step="0.01" value={formData.selling_price || ''} onChange={(e) => setFormData({ ...formData, selling_price: parseFloat(e.target.value) })} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Textarea value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Additional details..." />
-                </div>
-              </>
-            )}
+              ))}
+          </CardContent>
+          <CardFooter>
+              <Button onClick={handleSaveLinks} disabled={isSavingLinks}>
+                  {isSavingLinks ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                  Save Links
+              </Button>
+          </CardFooter>
+        </Card>
+      )}
+      {viewMode === "client" && (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex justify-between items-center mb-4">
+              <TabsList>
+                <TabsTrigger value="proposal1">Proposal 1</TabsTrigger>
+                <TabsTrigger value="proposal2">Proposal 2</TabsTrigger>
+                <TabsTrigger value="proposal3">Proposal 3</TabsTrigger>
+              </TabsList>
+              {canViewSupplierPrices() && (
+                <DialogTrigger asChild>
+                    <Button onClick={() => resetForm(parseInt(activeTab.replace('proposal', '')))}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Item
+                    </Button>
+                </DialogTrigger>
+              )}
           </div>
+          <TabsContent value="proposal1">{renderProposal(1)}</TabsContent>
+          <TabsContent value="proposal2">{renderProposal(2)}</TabsContent>
+          <TabsContent value="proposal3">{renderProposal(3)}</TabsContent>
+        </Tabs>
+      )}
 
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+
+        <DialogContent className="bg-white p-6 fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Edit" : "Add"} Procurement Item</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                  <Label htmlFor="proposal_number">Proposal</Label>
+                   <Select value={String(formData.proposal_number || 1)} onValueChange={(v) => setFormData((f) => ({ ...f, proposal_number: parseInt(v) }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="1">Proposal 1</SelectItem>
+                          <SelectItem value="2">Proposal 2</SelectItem>
+                          <SelectItem value="3">Proposal 3</SelectItem>
+                      </SelectContent>
+                   </Select>
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="item_name">Item Name</Label>
+                  <Input id="item_name" value={formData.item_name || ''} onChange={(e) => setFormData((f) => ({ ...f, item_name: e.target.value }))} />
+              </div>
+              {canViewSupplierPrices() && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="supplier_price">Supplier Price (USD)</Label>
+                          <Input id="supplier_price" type="number" step="0.01" value={formData.supplier_price || ''} onChange={(e) => setFormData((f) => ({ ...f, supplier_price: e.target.value }))} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label>Auto-Convert to SGD</Label>
+                          <div className="h-9 px-3 border rounded-md bg-gray-50 flex items-center">
+                            <CurrencyConverter value={parseFloat(formData.supplier_price) || 0} fromCurrency="USD" />
+                          </div>
+                      </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Supplier prices are entered in USD and auto-converted to SGD for reference</p>
+                </>
+              )}
+               <div className="space-y-2">
+                  <Label htmlFor="selling_price">Selling Price (SGD)</Label>
+                  <Input id="selling_price" type="number" value={formData.selling_price || ''} onChange={(e) => setFormData((f) => ({ ...f, selling_price: e.target.value }))} />
+              </div>
+               <div className="space-y-2">
+                  <Label htmlFor="notes">Product Description / Notes</Label>
+                  <Textarea id="notes" value={formData.notes || ''} onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))} placeholder="Enter product specifications, details..." />
+              </div>
+               <div className="space-y-2">
+                  <Label>Product Image</Label>
+                  <Input id="image" type="file" accept="image/*" onChange={handleFileChange} />
+                  {imagePreview &&
+              <div className="relative w-32 h-32 mt-2">
+                          <img src={imagePreview} alt="preview" className="w-full h-full object-cover rounded-md" />
+                           <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 w-6 h-6 rounded-full" onClick={() => {setImageFile(null);setImagePreview(null);setFormData((f) => ({ ...f, image_url: null }));}}>
+                               <X className="w-4 h-4" />
+                           </Button>
+                      </div>
+              }
+              </div>
+              {canViewSupplierPrices() && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.is_confirmed || false}
+                      onChange={(e) => setFormData((f) => ({ ...f, is_confirmed: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    Mark as Confirmed Product
+                  </Label>
+                  <p className="text-xs text-gray-500">Check this when this product has been confirmed/approved</p>
+                </div>
+              )}
+          </div>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+            <Button type="button" onClick={handleSave} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
+
 }

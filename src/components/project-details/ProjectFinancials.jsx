@@ -47,10 +47,10 @@ export default function ProjectFinancials({ project }) {
 
   const calculateTotals = () => {
     const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
-    const totalRevenue = (project?.estimated_value || 0);
+    const totalRevenue = project?.estimated_value || 0;
     const profit = totalRevenue - totalExpenses;
-    const margin = totalRevenue > 0 ? ((profit / totalRevenue) * 100).toFixed(2) : 0;
-    
+    const margin = totalRevenue > 0 ? (profit / totalRevenue * 100).toFixed(2) : 0;
+
     return { totalExpenses, totalRevenue, profit, margin };
   };
 
@@ -180,25 +180,25 @@ export default function ProjectFinancials({ project }) {
       </div>
 
       {/* Late Payment Alerts */}
-      {unpaidPayments.length > 0 && (
-        <Card className="border-red-200 bg-red-50">
+      {unpaidPayments.length > 0 &&
+      <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6 flex gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-semibold text-red-900">Outstanding Payments</p>
-              {unpaidPayments.map((payment, idx) => (
-                <p key={idx} className="text-sm text-red-800 mt-1">
+              {unpaidPayments.map((payment, idx) =>
+            <p key={idx} className="text-sm text-red-800 mt-1">
                   {payment.type}: SGD ${payment.amount.toFixed(2)} ({payment.daysLate} days overdue)
                 </p>
-              ))}
+            )}
             </div>
           </CardContent>
         </Card>
-      )}
+      }
 
       {/* Actions */}
       <div className="flex gap-2">
-        <Button onClick={() => setShowForm(true)} className="bg-sky-600 hover:bg-sky-700">
+        <Button onClick={() => setShowForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Add Expense
         </Button>
@@ -215,10 +215,10 @@ export default function ProjectFinancials({ project }) {
           <CardDescription>{expenses.length} expense(s)</CardDescription>
         </CardHeader>
         <CardContent>
-          {expenses.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No expenses recorded</p>
-          ) : (
-            <div className="overflow-x-auto">
+          {expenses.length === 0 ?
+          <p className="text-center text-gray-500 py-8">No expenses recorded</p> :
+
+          <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="border-b">
                   <tr>
@@ -231,8 +231,8 @@ export default function ProjectFinancials({ project }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {expenses.map(expense => (
-                    <tr key={expense.id} className="border-b hover:bg-gray-50">
+                  {expenses.map((expense) =>
+                <tr key={expense.id} className="border-b hover:bg-gray-50">
                       <td className="py-3">
                         <Badge variant="outline" className="text-xs capitalize">
                           {expense.category}
@@ -243,37 +243,37 @@ export default function ProjectFinancials({ project }) {
                       <td className="py-3 text-right font-semibold">SGD ${expense.amount.toFixed(2)}</td>
                       <td className="py-3">
                         <Badge className={
-                          expense.payment_status === 'paid' ? 'bg-green-500' :
-                          expense.payment_status === 'partial' ? 'bg-yellow-500' :
-                          'bg-gray-400'
-                        }>
+                    expense.payment_status === 'paid' ? 'bg-green-500' :
+                    expense.payment_status === 'partial' ? 'bg-yellow-500' :
+                    'bg-gray-400'
+                    }>
                           {expense.payment_status}
                         </Badge>
                       </td>
                       <td className="py-3 text-center">
                         <button
-                          onClick={() => {
-                            setEditingExpense(expense);
-                            setFormData(expense);
-                            setShowForm(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-700 text-xs mr-3"
-                        >
+                      onClick={() => {
+                        setEditingExpense(expense);
+                        setFormData(expense);
+                        setShowForm(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-xs mr-3">
+
                           <Edit className="w-4 h-4 inline" />
                         </button>
                         <button
-                          onClick={() => handleDeleteExpense(expense.id)}
-                          className="text-red-600 hover:text-red-700 text-xs"
-                        >
+                      onClick={() => handleDeleteExpense(expense.id)}
+                      className="text-red-600 hover:text-red-700 text-xs">
+
                           <Trash2 className="w-4 h-4 inline" />
                         </button>
                       </td>
                     </tr>
-                  ))}
+                )}
                 </tbody>
               </table>
             </div>
-          )}
+          }
         </CardContent>
       </Card>
 
@@ -286,7 +286,7 @@ export default function ProjectFinancials({ project }) {
           <div className="space-y-4">
             <div>
               <Label>Category</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+              <Select value={formData.category} onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -305,46 +305,46 @@ export default function ProjectFinancials({ project }) {
               <Label>Description *</Label>
               <Input
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="What was purchased"
-              />
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="What was purchased" />
+
             </div>
             <div>
               <Label>Amount (SGD) *</Label>
               <Input
                 type="number"
                 value={formData.amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                placeholder="0.00"
-              />
+                onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
+                placeholder="0.00" />
+
             </div>
             <div>
               <Label>Supplier/Vendor</Label>
               <Input
                 value={formData.supplier}
-                onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
-                placeholder="Supplier name"
-              />
+                onChange={(e) => setFormData((prev) => ({ ...prev, supplier: e.target.value }))}
+                placeholder="Supplier name" />
+
             </div>
             <div>
               <Label>Invoice Number</Label>
               <Input
                 value={formData.invoice_number}
-                onChange={(e) => setFormData(prev => ({ ...prev, invoice_number: e.target.value }))}
-                placeholder="INV-xxx"
-              />
+                onChange={(e) => setFormData((prev) => ({ ...prev, invoice_number: e.target.value }))}
+                placeholder="INV-xxx" />
+
             </div>
             <div>
               <Label>Date</Label>
               <Input
                 type="date"
                 value={formData.expense_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, expense_date: e.target.value }))}
-              />
+                onChange={(e) => setFormData((prev) => ({ ...prev, expense_date: e.target.value }))} />
+
             </div>
             <div>
               <Label>Payment Status</Label>
-              <Select value={formData.payment_status} onValueChange={(value) => setFormData(prev => ({ ...prev, payment_status: value }))}>
+              <Select value={formData.payment_status} onValueChange={(value) => setFormData((prev) => ({ ...prev, payment_status: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -359,10 +359,10 @@ export default function ProjectFinancials({ project }) {
               <Label>Notes</Label>
               <Textarea
                 value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                 placeholder="Additional notes"
-                className="min-h-16"
-              />
+                className="min-h-16" />
+
             </div>
             <div className="flex gap-3 pt-4">
               <Button onClick={handleSaveExpense} className="flex-1 bg-green-600 hover:bg-green-700">
@@ -384,14 +384,14 @@ export default function ProjectFinancials({ project }) {
                     notes: ''
                   });
                 }}
-                className="flex-1"
-              >
+                className="flex-1">
+
                 Cancel
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>);
+
 }
