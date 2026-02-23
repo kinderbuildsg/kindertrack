@@ -256,7 +256,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                         size="sm" 
                         className="flex-1"
                         onClick={async () => {
-                          await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                          await base44.entities.ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
                           onUpdate();
                         }}
                       >
@@ -387,7 +387,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                           size="sm"
                           variant={item.is_confirmed ? "secondary" : "default"}
                           onClick={async () => {
-                            await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                            await base44.entities.ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
                             onUpdate();
                           }}
                         >
