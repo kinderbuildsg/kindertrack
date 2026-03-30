@@ -198,7 +198,7 @@ export default function ProjectFinancials({ project }) {
 
       {/* Actions */}
       <div className="flex gap-2">
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={() => setShowForm(true)} className="bg-pink-300 text-primary-foreground px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 hover:bg-sky-700">
           <Plus className="w-4 h-4 mr-2" />
           Add Expense
         </Button>
@@ -279,7 +279,7 @@ export default function ProjectFinancials({ project }) {
 
       {/* Expense Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="bg-[hsl(var(--background))] text-[hsl(var(--background))] p-6 fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg max-w-md">
           <DialogHeader>
             <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add Expense'}</DialogTitle>
           </DialogHeader>
