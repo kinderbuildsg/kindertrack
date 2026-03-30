@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { ProcurementItem } from "@/entities/ProcurementItem";
+import { Project } from "@/entities/Project";
+import { UploadFile } from "@/integrations/Core";
+import { InvokeLLM } from "@/integrations/Core";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +23,7 @@ const CurrencyConverter = ({ value, fromCurrency }) => {
     setIsLoading(true);
     setConvertedValue(null);
     try {
-      const rateString = await base44.integrations.Core.InvokeLLM({
+      const rateString = await InvokeLLM({
         prompt: `What is the current exchange rate from ${fromCurrency} to SGD? Please provide only the number.`,
         add_context_from_internet: true
       });
@@ -69,7 +72,8 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   const loadUser = async () => {
     try {
-      const currentUser = await base44.auth.me();
+      const { auth } = await import("@/api/base44Client");
+      const currentUser = await auth.me();
       setUser(currentUser);
     } catch (error) {
       console.error("Error loading user:", error);
@@ -117,7 +121,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
   const handleSaveLinks = async () => {
     setIsSavingLinks(true);
     try {
-        await base44.entities.Project.update(project.id, {
+        await Project.update(project.id, {
             proposal_1_link: proposalLinks[1],
             proposal_2_link: proposalLinks[2],
             proposal_3_link: proposalLinks[3],
@@ -149,14 +153,14 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
     try {
       if (imageFile) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: imageFile });
+        const { file_url } = await UploadFile({ file: imageFile });
         updatedFormData.image_url = file_url;
       }
 
       if (isEditing) {
-        await base44.entities.ProcurementItem.update(isEditing.id, updatedFormData);
+        await ProcurementItem.update(isEditing.id, updatedFormData);
       } else {
-        await base44.entities.ProcurementItem.create(updatedFormData);
+        await ProcurementItem.create(updatedFormData);
       }
 
       onUpdate();
@@ -170,7 +174,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
 
   const handleDelete = async (itemId) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
-      await base44.entities.ProcurementItem.delete(itemId);
+      await ProcurementItem.delete(itemId);
       onUpdate();
     }
   };
@@ -256,7 +260,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                         size="sm" 
                         className="flex-1"
                         onClick={async () => {
-                          await base44.entities.ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                          await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
                           onUpdate();
                         }}
                       >
@@ -387,7 +391,7 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                           size="sm"
                           variant={item.is_confirmed ? "secondary" : "default"}
                           onClick={async () => {
-                            await base44.entities.ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
+                            await ProcurementItem.update(item.id, { is_confirmed: !item.is_confirmed });
                             onUpdate();
                           }}
                         >
@@ -465,12 +469,10 @@ export default function ProjectProcurement({ project, items, onUpdate }) {
                 <TabsTrigger value="proposal3">Proposal 3</TabsTrigger>
               </TabsList>
               {canViewSupplierPrices() && (
-                <DialogTrigger asChild>
-                    <Button onClick={() => resetForm(parseInt(activeTab.replace('proposal', '')))}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Item
-                    </Button>
-                </DialogTrigger>
+                <Button onClick={() => { resetForm(parseInt(activeTab.replace('proposal', ''))); setOpenDialog(true); }}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Item
+                </Button>
               )}
           </div>
           <TabsContent value="proposal1">{renderProposal(1)}</TabsContent>
