@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, TrendingUp, Users, DollarSign, Target, ArrowRight, Upload, Phone, BarChart3, RefreshCw } from "lucide-react";
+import { Plus, Search, TrendingUp, Users, DollarSign, Target, ArrowRight, Upload, BarChart3, RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LeadForm from "../components/leads/LeadForm";
 import LeadCard from "../components/leads/LeadCard";
 import CSVUploader from "../components/leads/CSVUploader";
-import ColdCallTracker from "../components/leads/ColdCallTracker";
 import LeadAnalyticsDashboard from "../components/leads/LeadAnalyticsDashboard";
 import BulkActionsBar from "../components/leads/BulkActionsBar";
 
@@ -230,14 +229,10 @@ export default function LeadManagement() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 bg-white shadow-md">
+          <TabsList className="grid w-full grid-cols-2 bg-white shadow-md">
             <TabsTrigger value="all">
               <Target className="w-4 h-4 mr-2" />
               All Leads
-            </TabsTrigger>
-            <TabsTrigger value="coldcall">
-              <Phone className="w-4 h-4 mr-2" />
-              Cold Call Tracker
             </TabsTrigger>
             <TabsTrigger value="analytics">
               <BarChart3 className="w-4 h-4 mr-2" />
@@ -298,10 +293,6 @@ export default function LeadManagement() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="coldcall" className="mt-6">
-            <ColdCallTracker leads={leads} onUpdate={loadData} />
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-6">

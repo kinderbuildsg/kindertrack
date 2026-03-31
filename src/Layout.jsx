@@ -23,7 +23,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { base44 } from "@/api/base44Client";
-import { MessageSquare } from "lucide-react";
 import NotificationPanel from "./components/notifications/NotificationPanel";
 import PerformanceOptimizer from "./components/performance/PerformanceOptimizer";
 
@@ -37,12 +36,6 @@ const getNavigationItems = (user) => {
       url: createPageUrl("Dashboard"),
       icon: LayoutDashboard,
       roles: ['admin', 'director', 'sales', 'designer', 'cold_caller']
-    },
-    {
-      title: "Cold Calling",
-      url: createPageUrl("ColdCalling"),
-      icon: MessageSquare,
-      roles: ['admin', 'director', 'cold_caller']
     },
     {
       title: "Leads",
