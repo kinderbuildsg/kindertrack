@@ -38,12 +38,6 @@ const getNavigationItems = (user) => {
       roles: ['admin', 'director', 'sales', 'designer', 'cold_caller']
     },
     {
-      title: "Leads",
-      url: createPageUrl("LeadManagement"),
-      icon: Users,
-      roles: ['admin', 'director', 'sales', 'cold_caller']
-    },
-    {
       title: "All Projects",
       url: createPageUrl("Projects"),
       icon: FolderKanban,
