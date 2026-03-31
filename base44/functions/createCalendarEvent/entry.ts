@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
         }
 
         // Get access token for Google Calendar
-        const accessToken = await base44.asServiceRole.connectors.getAccessToken('googlecalendar');
+        const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlecalendar');
 
         // Create calendar event
         const eventData = {

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCw } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addMonths, subMonths, isSameMonth, isSameDay, addDays, startOfDay } from "date-fns";
 import CalendarMonth from "../components/calendar/CalendarMonth.jsx";
 import CalendarWeek from "../components/calendar/CalendarWeek.jsx";
@@ -16,6 +16,8 @@ export default function Calendar() {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -128,6 +130,18 @@ export default function Calendar() {
     }
   };
 
+  const handleSyncToGoogle = async () => {
+    setIsSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await base44.functions.invoke('syncProjectsToGoogleCalendar', {});
+      setSyncResult(res);
+    } catch (error) {
+      setSyncResult({ error: error.message });
+    }
+    setIsSyncing(false);
+  };
+
   const getTitle = () => {
     if (view === "month") return format(currentDate, "MMMM yyyy");
     if (view === "week") {
@@ -151,6 +165,22 @@ export default function Calendar() {
               <p className="text-gray-600">
                 View and manage project timelines, deadlines, and tasks
               </p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <Button
+                onClick={handleSyncToGoogle}
+                disabled={isSyncing}
+                className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Syncing...' : 'Sync to Google Calendar'}
+              </Button>
+              {syncResult && !syncResult.error && (
+                <p className="text-xs text-green-600">✓ Synced {syncResult.created + syncResult.updated} events ({syncResult.created} new, {syncResult.updated} updated)</p>
+              )}
+              {syncResult?.error && (
+                <p className="text-xs text-red-600">Error: {syncResult.error}</p>
+              )}
             </div>
           </div>
 

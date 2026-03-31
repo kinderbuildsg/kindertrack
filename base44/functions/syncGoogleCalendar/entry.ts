@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     const { projectId, title, startDate, endDate, description, eventId } = await req.json();
 
     // Get Google Calendar access token
-    const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlecalendar");
 
     const calendarEvent = {
       summary: title || "Project Event",
