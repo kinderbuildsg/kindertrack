@@ -7,7 +7,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
-import SiteEvaluation from "../components/project-workflow/SiteEvaluation";
+import SiteVisit from "../components/project-workflow/SiteVisit";
 import DesignProposal from "../components/project-workflow/DesignProposal";
 import DealClosed from "../components/project-workflow/DealClosed";
 import ProjectProcurement from "../components/project-details/ProjectProcurement";
@@ -219,8 +219,8 @@ export default function ProjectDetails() {
 
         {/* Stage Content */}
         <div className="space-y-6">
-          {/* Stage 1: Site Evaluation */}
-          <SiteEvaluation project={project} onUpdate={handleUpdate} />
+          {/* Stage 1: Site Visit */}
+          <SiteVisit project={project} onUpdate={handleUpdate} />
 
           {/* Stage 2: Design Proposal */}
           {currentStageIndex >= 1 && (

@@ -1,0 +1,352 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "project_number": {
+      "type": "string",
+      "description": "Unique project identifier"
+    },
+    "project_title": {
+      "type": "string",
+      "description": "The official title or name of the project"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client or organization name"
+    },
+    "mcst_school_name": {
+      "type": "string",
+      "description": "MCST or School name"
+    },
+    "contact_person": {
+      "type": "string",
+      "description": "Primary contact person"
+    },
+    "contact_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "site_address": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "site_evaluation",
+        "design_proposal",
+        "deal_closed",
+        "procurement",
+        "work_in_progress",
+        "completion",
+        "maintenance"
+      ],
+      "default": "site_evaluation"
+    },
+    "sub_status": {
+      "type": "string",
+      "description": "Detailed status within stage"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Primary person responsible"
+    },
+    "team_members": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of user emails assigned to project"
+    },
+    "site_evaluation_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scheduled site visit date and time"
+    },
+    "site_evaluation_location": {
+      "type": "string",
+      "description": "Detailed location for site visit"
+    },
+    "site_evaluation_notes": {
+      "type": "string",
+      "description": "Notes from site visit"
+    },
+    "site_evaluation_images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Images from site visit"
+    },
+    "site_visit_attendees": {
+      "type": "string",
+      "description": "Names of people attending the site visit"
+    },
+    "site_visit_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the site visit has been completed"
+    },
+    "site_visit_todos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "text": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Checklist of things to do during site visit"
+    },
+    "polycam_3d_scan_link": {
+      "type": "string",
+      "description": "Link to 3D scan from Polycam"
+    },
+    "client_requirements": {
+      "type": "string",
+      "description": "Detailed client requirements and job description"
+    },
+    "design_proposal_images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Design proposal images for designer"
+    },
+    "proposal_quotes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file_url": {
+            "type": "string"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "file_type": {
+            "type": "string",
+            "enum": [
+              "pdf",
+              "image"
+            ]
+          },
+          "uploaded_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Array of proposal quote files"
+    },
+    "signed_proposal_url": {
+      "type": "string",
+      "description": "Signed proposal or PO document"
+    },
+    "google_drive_link": {
+      "type": "string",
+      "description": "Google Drive link to chosen project/design files"
+    },
+    "payment_terms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "percentage": {
+            "type": "number"
+          },
+          "label": {
+            "type": "string"
+          },
+          "received": {
+            "type": "boolean",
+            "default": false
+          },
+          "received_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    },
+    "deal_closed_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "estimated_value": {
+      "type": "number",
+      "description": "Project value in SGD"
+    },
+    "actual_value": {
+      "type": "number",
+      "description": "Final actual project value"
+    },
+    "payment_40_invoice_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "payment_40_received": {
+      "type": "boolean",
+      "default": false
+    },
+    "payment_40_received_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "payment_30_invoice_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "payment_30_received": {
+      "type": "boolean",
+      "default": false
+    },
+    "payment_30_received_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "payment_30_final_invoice_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "payment_30_final_received": {
+      "type": "boolean",
+      "default": false
+    },
+    "payment_30_final_received_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "work_start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "work_completion_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "work_schedule": {
+      "type": "string"
+    },
+    "work_calendar_event_id": {
+      "type": "string",
+      "description": "Google Calendar event ID for work period"
+    },
+    "maintenance_calendar_event_id": {
+      "type": "string",
+      "description": "Google Calendar event ID for maintenance"
+    },
+    "handover_form_url": {
+      "type": "string"
+    },
+    "completion_photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_maintenance_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_maintenance_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_follow_up_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "calendar_event_id": {
+      "type": "string",
+      "description": "Google Calendar event ID for site visit"
+    },
+    "client_satisfaction_rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    }
+  },
+  "required": [
+    "client_name",
+    "contact_person",
+    "site_address"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "data.assigned_to": "{{user.email}}"
+        },
+        {
+          "data.team_members": {
+            "$in": [
+              "{{user.email}}"
+            ]
+          }
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.assigned_to": "{{user.email}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.assigned_to": "{{user.email}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
