@@ -7,7 +7,6 @@ import {
   Search as SearchIcon,
   Filter
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +27,15 @@ import EmployeeDashboard from "../components/dashboard/EmployeeDashboard";
 import FinanceDashboard from "../components/dashboard/FinanceDashboard";
 import CommissionWidget from "../components/dashboard/CommissionWidget";
 import AIInsightsDashboard from "../components/dashboard/AIInsightsDashboard";
+
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div className="mb-3">
+      <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+      {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -180,27 +188,29 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-[1600px] mx-auto">
         {/* Header Section */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                Project Dashboard
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+                Dashboard
               </h1>
-              <p className="text-gray-600">
-                Welcome back, {user?.full_name || "User"}! Here's your project overview.
+              <p className="text-sm text-gray-500 mt-1">
+                Welcome back, <span className="font-medium text-gray-700">{user?.full_name || "User"}</span>
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 onClick={loadData}
                 disabled={isLoading}
+                className="border-gray-200 text-gray-500 hover:text-gray-700"
               >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
               </Button>
               <Link to={createPageUrl("CreateProject")}>
-                <button className="bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+                <button className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm hover:shadow transition-all duration-200">
                   + New Project
                 </button>
               </Link>
@@ -208,103 +218,82 @@ export default function Dashboard() {
           </div>
 
           {/* Search & Filter Bar */}
-          <Card className="shadow-lg border-0">
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Search projects... (Click for advanced search)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onClick={() => setIsGlobalSearchOpen(true)}
-                    className="pl-10 cursor-pointer"
-                    readOnly
-                  />
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    variant={filter === 'all' ? 'default' : 'outline'}
-                    onClick={() => setFilter('all')}
-                    size="sm"
-                  >
-                    All Projects
-                  </Button>
-                  <Button
-                    variant={filter === 'my' ? 'default' : 'outline'}
-                    onClick={() => setFilter('my')}
-                    size="sm"
-                  >
-                    My Projects
-                  </Button>
-                  <Button
-                    variant={filter === 'active' ? 'default' : 'outline'}
-                    onClick={() => setFilter('active')}
-                    size="sm"
-                  >
-                    Active Only
-                  </Button>
-                  <Button
-                    variant={filter === 'urgent' ? 'default' : 'outline'}
-                    onClick={() => setFilter('urgent')}
-                    size="sm"
-                  >
-                    Urgent
-                  </Button>
-                  <SavedFilters 
-                    currentFilters={{ filter, searchQuery }}
-                    onApplyFilter={handleApplyFilter}
-                    user={user}
-                  />
-                </div>
+          <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+              <div className="flex-1 relative">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onClick={() => setIsGlobalSearchOpen(true)}
+                  className="pl-9 cursor-pointer text-sm border-gray-200 bg-gray-50 focus:bg-white h-9"
+                  readOnly
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex gap-1.5 flex-wrap">
+                {[
+                  { key: 'all', label: 'All' },
+                  { key: 'my', label: 'Mine' },
+                  { key: 'active', label: 'Active' },
+                  { key: 'urgent', label: 'Urgent' },
+                ].map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      filter === f.key
+                        ? 'bg-sky-500 text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+                <SavedFilters
+                  currentFilters={{ filter, searchQuery }}
+                  onApplyFilter={handleApplyFilter}
+                  user={user}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Critical Alerts Section - Highest Priority */}
-        <div className="mb-8">
+        {/* Critical Alerts */}
+        <div className="mb-5">
           <SmartNotifications projects={projects} tasks={tasks} user={user} isLoading={isLoading} />
         </div>
 
-        {/* Admin-Only Intelligence Section */}
+        {/* Admin Intelligence */}
         {user?.role === 'admin' && (
-          <div className="mb-8">
-            <div className="mb-3">
-              <h2 className="text-lg font-semibold text-gray-900">Intelligence & Insights</h2>
-              <p className="text-sm text-gray-500">AI-powered project health analysis and revenue forecasting</p>
-            </div>
+          <div className="mb-5">
+            <SectionHeader title="Intelligence & Insights" subtitle="AI-powered health analysis and revenue forecasting" />
             <AIInsightsDashboard user={user} />
           </div>
         )}
 
-        {/* Financial Section - Finance & Sales Focused */}
+        {/* Financial */}
         {(user?.role !== 'admin' || user?.job_role === 'finance') && (
-          <div className="mb-8">
-            <div className="mb-3">
-              <h2 className="text-lg font-semibold text-gray-900">Financial Overview</h2>
-              <p className="text-sm text-gray-500">Commission and revenue tracking</p>
-            </div>
-            <div className="space-y-4">
-              {user && user.role !== 'admin' && (
-                <CommissionWidget user={user} />
-              )}
+          <div className="mb-5">
+            <SectionHeader title="Financial Overview" subtitle="Commission and revenue tracking" />
+            <div className="space-y-3">
+              {user && user.role !== 'admin' && <CommissionWidget user={user} />}
               <FollowUpList user={user} />
             </div>
           </div>
         )}
 
-        {/* Main Dashboard Section - Role Based */}
-        <div className="mb-8">
-          <div className="mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {user?.job_role === 'admin' || user?.role === 'admin' ? 'Project Overview' : 
-               user?.job_role === 'designer' ? 'Design Projects' : 
-               user?.job_role === 'finance' ? 'Financial Dashboard' : 
-               'My Projects'}
-            </h2>
-            <p className="text-sm text-gray-500">Current status and key metrics</p>
-          </div>
+        {/* Main Dashboard */}
+        <div className="mb-5">
+          <SectionHeader
+            title={
+              user?.job_role === 'admin' || user?.role === 'admin' ? 'Project Pipeline' :
+              user?.job_role === 'designer' ? 'Design Projects' :
+              user?.job_role === 'finance' ? 'Financial Dashboard' : 'My Projects'
+            }
+            subtitle="Drag cards between columns to update stage"
+          />
           {renderDashboard()}
         </div>
 

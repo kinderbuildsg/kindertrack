@@ -259,77 +259,77 @@ export default function Layout({ children, currentPageName }) {
       
       <div className="min-h-screen flex w-full bg-[var(--background)]">
         <Sidebar className="border-r border-[var(--border)] bg-white">
-          <SidebarHeader className="border-b border-[var(--border)] p-6">
+          <SidebarHeader className="border-b border-[var(--border)] px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-sky-600 rounded-xl flex items-center justify-center shadow-lg">
-                <FolderKanban className="w-6 h-6 text-white" />
+              <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-sky-700 rounded-xl flex items-center justify-center shadow-md">
+                <FolderKanban className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-xl text-gray-900">Kinderbuild Projects</h2>
-                <p className="text-xs text-gray-500">Project Manager</p>
+                <h2 className="font-bold text-base text-gray-900 leading-tight">Kinderbuild</h2>
+                <p className="text-xs text-sky-500 font-medium">Project Manager</p>
               </div>
             </div>
           </SidebarHeader>
           
-          <SidebarContent className="p-3">
+          <SidebarContent className="px-3 py-4">
+            {/* New Project CTA */}
+            <div className="px-2 mb-4">
+              <Link to={createPageUrl("CreateProject")}>
+                <button className="w-full bg-sky-500 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center gap-2">
+                  <span className="text-lg leading-none">+</span> New Project
+                </button>
+              </Link>
+            </div>
+
             <SidebarGroup>
-              <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-2">
-                Main Menu
+              <SidebarGroupLabel className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 pb-1">
+                Navigation
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {getNavigationItems(user).map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
-                        asChild 
-                        className={`hover:bg-sky-50 hover:text-sky-700 transition-all duration-200 rounded-xl mb-1 ${
-                          location.pathname === item.url ? 'bg-sky-50 text-sky-700 shadow-sm' : ''
-                        }`}
-                      >
-                        <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
-                          <item.icon className="w-5 h-5" />
-                          <span className="font-medium">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {getNavigationItems(user).map((item) => {
+                    const isActive = location.pathname === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          className={`transition-all duration-150 rounded-lg mb-0.5 ${
+                            isActive
+                              ? 'bg-sky-50 text-sky-700 font-semibold'
+                              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                          }`}
+                        >
+                          <Link to={item.url} className="flex items-center gap-3 px-3 py-2.5">
+                            <item.icon className={`w-4 h-4 ${isActive ? 'text-sky-600' : 'text-gray-400'}`} />
+                            <span className="text-sm">{item.title}</span>
+                            {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-sky-500" />}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup className="mt-4">
-              <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-2">
-                Quick Actions
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <div className="px-3 py-2 space-y-3">
-                  <Link to={createPageUrl("CreateProject")}>
-                    <button className="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-200">
-                      + New Project
-                    </button>
-                  </Link>
-                </div>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="border-t border-[var(--border)] p-4">
+          <SidebarFooter className="border-t border-[var(--border)] px-3 py-3">
             {user && (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
+              <div className="flex items-center gap-2.5 px-1">
+                <div className="w-8 h-8 bg-gradient-to-br from-sky-400 to-sky-600 rounded-full flex items-center justify-center shrink-0">
+                  <span className="text-white font-bold text-xs">
                     {user.full_name?.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm truncate">{user.full_name}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.role}</p>
+                  <p className="font-semibold text-gray-900 text-sm truncate leading-tight">{user.full_name}</p>
+                  <p className="text-xs text-gray-400 truncate capitalize">{user.job_role || user.role}</p>
                 </div>
-                <button 
+                <button
                   onClick={handleLogout}
-                  className="text-xs text-gray-500 hover:text-gray-700"
+                  className="text-xs text-gray-400 hover:text-red-500 transition-colors px-1 py-0.5 rounded"
                 >
-                  Logout
+                  Out
                 </button>
               </div>
             )}
@@ -337,10 +337,10 @@ export default function Layout({ children, currentPageName }) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col overflow-hidden">
-          <header className="bg-white border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4 md:hidden">
-              <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200" />
-              <h1 className="text-xl font-bold text-gray-900">Kinderbuild Projects</h1>
+          <header className="bg-white border-b border-[var(--border)] px-4 md:px-6 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="hover:bg-gray-100 p-2 rounded-lg transition-colors duration-200 md:hidden" />
+              <span className="text-sm font-semibold text-gray-700 md:hidden">Kinderbuild</span>
             </div>
             <div className="flex-1" />
             <NotificationPanel user={user} />

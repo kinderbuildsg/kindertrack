@@ -155,13 +155,17 @@ export default function SiteVisit({ project, onUpdate }) {
   // ─── STEP 1: Schedule ───────────────────────────────────────────────
   if (step === 1 || (step === 2 && isEditing)) {
     return (
-      <Card className="border-2 border-sky-100">
-        <CardHeader className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-t-xl">
-          <CardTitle className="flex items-center gap-2 text-sky-800">
-            <MapPin className="w-5 h-5" />
-            Schedule Site Visit
-          </CardTitle>
-          <p className="text-sm text-sky-600">Fill in the site visit details — this will automatically sync to Google Calendar</p>
+      <Card className="border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-indigo-50 border-b border-gray-100 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-sky-100 rounded-xl flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-sky-600" />
+            </div>
+            <div>
+              <CardTitle className="text-base text-gray-900">Schedule Site Visit</CardTitle>
+              <p className="text-xs text-gray-500 mt-0.5">Auto-syncs to Google Calendar on save</p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
           <div className="space-y-2">
@@ -272,21 +276,25 @@ export default function SiteVisit({ project, onUpdate }) {
     const isPast = visitDate && visitDate < new Date();
 
     return (
-      <Card className="border-2 border-amber-100">
-        <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-t-xl">
+      <Card className="border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-gray-100 px-6 py-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-amber-800">
-              <Clock className="w-5 h-5" />
-              Site Visit {isPast ? 'Completed?' : 'Scheduled'}
-            </CardTitle>
-            <div className="flex gap-2 items-center">
-              {isPast && (
-                <Badge className="bg-amber-100 text-amber-700 border-amber-300">Awaiting Confirmation</Badge>
-              )}
-              <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-                <Edit className="w-4 h-4" />
-              </Button>
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isPast ? 'bg-amber-100' : 'bg-sky-100'}`}>
+                <Clock className={`w-5 h-5 ${isPast ? 'text-amber-600' : 'text-sky-600'}`} />
+              </div>
+              <div>
+                <CardTitle className="text-base text-gray-900">
+                  Site Visit {isPast ? '— Confirm Completion' : 'Scheduled'}
+                </CardTitle>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {isPast ? 'Visit date has passed — mark as completed below' : 'Upcoming visit'}
+                </p>
+              </div>
             </div>
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-gray-600">
+              <Edit className="w-4 h-4" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="pt-5 space-y-5">
@@ -393,14 +401,19 @@ export default function SiteVisit({ project, onUpdate }) {
 
   // ─── STEP 3: Completed → Upload Polycam → Await Proposal ──────────
   return (
-    <Card className="border-2 border-green-100">
-      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
+    <Card className="border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100 px-6 py-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-green-800">
-            <CheckCircle2 className="w-5 h-5 text-green-500" />
-            Site Visit Completed
-          </CardTitle>
-          <Badge className="bg-green-100 text-green-700 border-green-300">✓ Done</Badge>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <CardTitle className="text-base text-gray-900">Site Visit Completed</CardTitle>
+              <p className="text-xs text-gray-500 mt-0.5">Upload Polycam scan & await design proposal</p>
+            </div>
+          </div>
+          <Badge className="bg-green-100 text-green-700 border border-green-200 text-xs">✓ Done</Badge>
         </div>
       </CardHeader>
       <CardContent className="pt-5 space-y-5">

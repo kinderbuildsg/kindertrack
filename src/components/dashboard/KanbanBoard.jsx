@@ -5,33 +5,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { 
-  User, 
-  DollarSign,
-  Clock,
-  MapPin,
-  MessageSquare,
-  CheckSquare
-} from "lucide-react";
+import { User, DollarSign, MapPin, MessageSquare, CheckCircle2, Circle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import QuickUpdateDialog from "../quick-actions/QuickUpdateDialog";
 
 const stages = [
-  { id: "cold_outreach", name: "Cold Outreach", color: "bg-gray-100 border-gray-300", textColor: "text-gray-700" },
-  { id: "design", name: "Design", color: "bg-cyan-100 border-cyan-300", textColor: "text-cyan-700" },
-  { id: "closing", name: "Closing", color: "bg-blue-100 border-blue-300", textColor: "text-blue-700" },
-  { id: "procurement", name: "Procurement", color: "bg-yellow-100 border-yellow-300", textColor: "text-yellow-700" },
-  { id: "work", name: "Installation", color: "bg-purple-100 border-purple-300", textColor: "text-purple-700" },
-  { id: "completion", name: "Completion", color: "bg-green-100 border-green-300", textColor: "text-green-700" },
-  { id: "post_maintenance", name: "Maintenance", color: "bg-teal-100 border-teal-300", textColor: "text-teal-700" }
+  { id: "cold_outreach", name: "Cold Outreach",  color: "bg-slate-50",   headerColor: "bg-slate-100 text-slate-700 border-slate-200" },
+  { id: "design",        name: "Design",          color: "bg-cyan-50",    headerColor: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+  { id: "closing",       name: "Closing",         color: "bg-blue-50",    headerColor: "bg-blue-100 text-blue-700 border-blue-200" },
+  { id: "procurement",   name: "Procurement",     color: "bg-amber-50",   headerColor: "bg-amber-100 text-amber-700 border-amber-200" },
+  { id: "work",          name: "Installation",    color: "bg-purple-50",  headerColor: "bg-purple-100 text-purple-700 border-purple-200" },
+  { id: "completion",    name: "Completion",      color: "bg-green-50",   headerColor: "bg-green-100 text-green-700 border-green-200" },
+  { id: "post_maintenance", name: "Maintenance",  color: "bg-teal-50",    headerColor: "bg-teal-100 text-teal-700 border-teal-200" },
 ];
 
-const priorityColors = {
-  low: "bg-blue-100 text-blue-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  high: "bg-orange-100 text-orange-800",
-  urgent: "bg-red-100 text-red-800"
+const priorityDot = {
+  low:    "bg-slate-400",
+  medium: "bg-amber-400",
+  high:   "bg-orange-500",
+  urgent: "bg-red-500",
 };
 
 export default function KanbanBoard({ projects, isLoading, onUpdate, selectedProjects = [], onSelectProject }) {
@@ -39,13 +32,9 @@ export default function KanbanBoard({ projects, isLoading, onUpdate, selectedPro
 
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
-    
     const { draggableId, destination } = result;
-    const projectId = draggableId;
-    const newStage = destination.droppableId;
-    
     try {
-      await base44.entities.Project.update(projectId, { stage: newStage });
+      await base44.entities.Project.update(draggableId, { stage: destination.droppableId });
       onUpdate();
     } catch (error) {
       console.error("Error updating project stage:", error);
@@ -64,20 +53,17 @@ export default function KanbanBoard({ projects, isLoading, onUpdate, selectedPro
     onSelectProject?.(project);
   };
 
-  const isSelected = (projectId) => {
-    return selectedProjects.some(p => p.id === projectId);
-  };
-
-  const getProjectsByStage = (stageId) => {
-    return projects.filter(p => p.stage === stageId);
-  };
+  const isSelected = (id) => selectedProjects.some(p => p.id === id);
+  const getProjectsByStage = (stageId) => projects.filter(p => p.stage === stageId);
 
   if (isLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {stages.map(stage => (
-          <div key={stage.id} className="flex-shrink-0 w-80">
-            <Skeleton className="h-96" />
+      <div className="flex gap-3 overflow-x-auto pb-4">
+        {stages.map(s => (
+          <div key={s.id} className="flex-shrink-0 w-64">
+            <Skeleton className="h-8 mb-2 rounded-lg" />
+            <Skeleton className="h-36 mb-2 rounded-xl" />
+            <Skeleton className="h-36 rounded-xl" />
           </div>
         ))}
       </div>
@@ -85,151 +71,131 @@ export default function KanbanBoard({ projects, isLoading, onUpdate, selectedPro
   }
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4 scroll-smooth">
-        <style>{`
-          .flex.gap-4.overflow-x-auto::-webkit-scrollbar {
-            height: 8px;
-          }
-          .flex.gap-4.overflow-x-auto::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-          }
-          .flex.gap-4.overflow-x-auto::-webkit-scrollbar-thumb {
-            background: #0EA5E9;
-            border-radius: 10px;
-          }
-          .flex.gap-4.overflow-x-auto::-webkit-scrollbar-thumb:hover {
-            background: #0284C7;
-          }
-        `}</style>
-        {stages.map(stage => (
-          <div key={stage.id} className="flex-shrink-0 w-80">
-            <div className={`${stage.color} border-2 rounded-xl p-3 mb-3`}>
-              <h3 className={`font-bold ${stage.textColor} text-sm uppercase tracking-wide`}>
-                {stage.name}
-                <span className="ml-2 text-xs font-normal">
-                  ({getProjectsByStage(stage.id).length})
-                </span>
-              </h3>
-            </div>
-            
-            <Droppable droppableId={stage.id}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`space-y-3 min-h-[400px] p-2 rounded-lg transition-colors ${
-                    snapshot.isDraggingOver ? 'bg-sky-50' : 'bg-transparent'
-                  }`}
-                >
-                  {getProjectsByStage(stage.id).map((project, index) => (
-                    <Draggable key={project.id} draggableId={project.id} index={index}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`transition-shadow ${
-                            snapshot.isDragging ? 'shadow-2xl' : ''
-                          }`}
-                        >
-                          <Link to={createPageUrl(`ProjectDetails?id=${project.id}`)}>
-                            <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-4 cursor-pointer border border-gray-200">
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-start gap-2 flex-1 min-w-0">
-                                  {onSelectProject && (
-                                    <Checkbox
-                                      checked={isSelected(project.id)}
-                                      onClick={(e) => handleSelectProject(e, project)}
-                                      className="mt-1"
-                                    />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-gray-900 mb-1 line-clamp-1">
-                                      {project.project_title || project.client_name}
-                                    </h4>
-                                    <p className="text-xs text-gray-500 line-clamp-1">
-                                      Client: {project.client_name}
-                                    </p>
+    <>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="flex gap-3 overflow-x-auto pb-4"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: '#0EA5E9 #f1f5f9' }}>
+          <style>{`
+            .kanban-scroll::-webkit-scrollbar { height: 6px; }
+            .kanban-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+            .kanban-scroll::-webkit-scrollbar-thumb { background: #0EA5E9; border-radius: 8px; }
+          `}</style>
+
+          {stages.map(stage => {
+            const stageProjects = getProjectsByStage(stage.id);
+            return (
+              <div key={stage.id} className="flex-shrink-0 w-64">
+                {/* Column Header */}
+                <div className={`${stage.headerColor} border rounded-xl px-3 py-2 mb-2 flex items-center justify-between`}>
+                  <span className="text-xs font-bold uppercase tracking-wider">{stage.name}</span>
+                  <span className="text-xs font-semibold bg-white/60 px-1.5 py-0.5 rounded-md">
+                    {stageProjects.length}
+                  </span>
+                </div>
+
+                <Droppable droppableId={stage.id}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`space-y-2 min-h-[200px] p-1.5 rounded-xl transition-colors duration-150 ${
+                        snapshot.isDraggingOver ? 'bg-sky-50 ring-2 ring-sky-200' : 'bg-transparent'
+                      }`}
+                    >
+                      {stageProjects.map((project, index) => (
+                        <Draggable key={project.id} draggableId={project.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`${snapshot.isDragging ? 'opacity-90 rotate-1 shadow-2xl' : ''} transition-all`}
+                            >
+                              <Link to={createPageUrl(`ProjectDetails?id=${project.id}`)}>
+                                <div className={`bg-white rounded-xl border border-gray-200 p-3 hover:border-sky-300 hover:shadow-md transition-all duration-150 cursor-pointer ${
+                                  isSelected(project.id) ? 'ring-2 ring-sky-400 border-sky-300' : ''
+                                }`}>
+                                  {/* Card Top: checkbox + title + priority dot */}
+                                  <div className="flex items-start gap-2 mb-2">
+                                    {onSelectProject && (
+                                      <Checkbox
+                                        checked={isSelected(project.id)}
+                                        onClick={(e) => handleSelectProject(e, project)}
+                                        className="mt-0.5 shrink-0"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-1">
+                                        <h4 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2">
+                                          {project.project_title || project.client_name}
+                                        </h4>
+                                        <span
+                                          className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${priorityDot[project.priority || 'medium']}`}
+                                          title={project.priority}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Meta Info */}
+                                  <div className="space-y-1">
+                                    {project.contact_person && (
+                                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                        <User className="w-3 h-3 shrink-0" />
+                                        <span className="truncate">{project.contact_person}</span>
+                                      </div>
+                                    )}
+                                    {project.site_address && (
+                                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                        <MapPin className="w-3 h-3 shrink-0" />
+                                        <span className="truncate">{project.site_address}</span>
+                                      </div>
+                                    )}
+                                    {project.estimated_value && (
+                                      <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                                        <DollarSign className="w-3 h-3 shrink-0" />
+                                        S${project.estimated_value.toLocaleString()}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Payment dots */}
+                                  <div className="mt-2.5 pt-2.5 border-t border-gray-100 flex items-center justify-between">
+                                    <div className="flex gap-1 items-center">
+                                      <span className="text-xs text-gray-400 mr-0.5">Pay</span>
+                                      {[project.payment_40_received, project.payment_30_received, project.payment_30_final_received].map((r, i) => (
+                                        <span key={i} className={`w-2 h-2 rounded-full ${r ? 'bg-green-500' : 'bg-gray-200'}`} />
+                                      ))}
+                                    </div>
+                                    <button
+                                      onClick={(e) => handleQuickUpdate(e, project)}
+                                      className="text-gray-400 hover:text-sky-500 transition-colors"
+                                      title="Quick Update"
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5" />
+                                    </button>
                                   </div>
                                 </div>
-                                <Badge className={priorityColors[project.priority || "medium"]}>
-                                  {project.priority || "medium"}
-                                </Badge>
-                              </div>
-
-                              <div className="space-y-2 text-xs text-gray-600">
-                                <div className="flex items-center gap-2">
-                                  <User className="w-3.5 h-3.5" />
-                                  <span className="truncate">{project.contact_person}</span>
-                                </div>
-                                
-                                {project.site_address && (
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    <span className="truncate">{project.site_address}</span>
-                                  </div>
-                                )}
-
-                                {project.estimated_value && (
-                                  <div className="flex items-center gap-2">
-                                    <DollarSign className="w-3.5 h-3.5" />
-                                    <span>${project.estimated_value.toLocaleString()}</span>
-                                  </div>
-                                )}
-
-                                {project.timeline_expected_completion && (
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    <span>Due: {new Date(project.timeline_expected_completion).toLocaleDateString()}</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Payment Status */}
-                              <div className="mt-3 pt-3 border-t border-gray-100">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="text-gray-500">Payment</span>
-                                  <div className="flex gap-1">
-                                    <div className={`w-2 h-2 rounded-full ${project.payment_40_received ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                    <div className={`w-2 h-2 rounded-full ${project.payment_30_received ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                    <div className={`w-2 h-2 rounded-full ${project.payment_30_final_received ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Quick Actions */}
-                              <div className="mt-2 pt-2 border-t border-gray-100">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full text-xs"
-                                  onClick={(e) => handleQuickUpdate(e, project)}
-                                >
-                                  <MessageSquare className="w-3 h-3 mr-1" />
-                                  Quick Update
-                                </Button>
-                              </div>
+                              </Link>
                             </div>
-                          </Link>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+
+                      {stageProjects.length === 0 && (
+                        <div className="text-center text-gray-300 py-6 text-xs select-none">
+                          Drop here
                         </div>
                       )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                  
-                  {getProjectsByStage(stage.id).length === 0 && (
-                    <div className="text-center text-gray-400 py-8 text-sm">
-                      No projects in this stage
                     </div>
                   )}
-                </div>
-              )}
-            </Droppable>
-          </div>
-        ))}
-      </div>
+                </Droppable>
+              </div>
+            );
+          })}
+        </div>
+      </DragDropContext>
 
       {quickUpdateProject && (
         <QuickUpdateDialog
@@ -239,6 +205,6 @@ export default function KanbanBoard({ projects, isLoading, onUpdate, selectedPro
           onSuccess={onUpdate}
         />
       )}
-    </DragDropContext>
+    </>
   );
 }
