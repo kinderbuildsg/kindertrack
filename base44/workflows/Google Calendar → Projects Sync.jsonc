@@ -1,0 +1,38 @@
+{
+  "name": "Google Calendar \u2192 Projects Sync",
+  "description": "Receives Google Calendar event changes and syncs dates back to project records",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "connector",
+      "events": [
+        "events"
+      ],
+      "integration_type": "googlecalendar",
+      "resource_id": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "google_calendar_projects_sync",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "handleGoogleCalendarWebhook",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "handleGoogleCalendarWebhook"
+  }
+}
